@@ -19,10 +19,7 @@ class AiChatService:
         self.model_name = settings.QWEN_MODEL_NAME
         self.base_url = settings.QWEN_BASE_URL
 
-        self.client = OpenAI(
-            api_key=self.api_key,
-            base_url=self.base_url
-        )
+        self.client = None
 
         self.system_prompt = """你是一位专业的学生成果画像分析师，专注于分析大学生的各类学术与实践成果。
 
@@ -49,6 +46,13 @@ class AiChatService:
 - 如果学生询问与学习成果无关的话题，礼貌地引导回成果相关内容
 - 始终保持积极正面但客观的态度
 - 尊重学生隐私"""
+
+    def _get_client(self) -> OpenAI:
+        if not self.api_key:
+            raise RuntimeError("QWEN_API_KEY or DASHSCOPE_API_KEY is not configured")
+        if self.client is None:
+            self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        return self.client
 
     def chat(
         self,
@@ -80,7 +84,7 @@ class AiChatService:
                 "content": user_message
             })
 
-            completion = self.client.chat.completions.create(
+            completion = self._get_client().chat.completions.create(
                 model=self.model_name,
                 messages=messages,
                 temperature=temperature,
@@ -175,7 +179,7 @@ suggestions：2-4条具体建议"""
             user_content += "\n\n请根据以上信息生成该学生的人物画像JSON。"
             messages.append({"role": "user", "content": user_content})
 
-            completion = self.client.chat.completions.create(
+            completion = self._get_client().chat.completions.create(
                 model=self.model_name,
                 messages=messages,
                 temperature=0.5,

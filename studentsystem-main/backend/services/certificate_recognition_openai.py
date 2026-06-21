@@ -20,12 +20,14 @@ class CertificateRecognitionServiceOpenAI:
         self.api_key = settings.DASHSCOPE_API_KEY or settings.QWEN_API_KEY
         self.model_name = settings.QWEN_VL_MODEL  # Use VL model for vision tasks
         self.base_url = settings.QWEN_BASE_URL
-        
-        # Initialize OpenAI client with DashScope endpoint
-        self.client = OpenAI(
-            api_key=self.api_key,
-            base_url=self.base_url
-        )
+        self.client = None
+
+    def _get_client(self) -> OpenAI:
+        if not self.api_key:
+            raise RuntimeError("QWEN_API_KEY or DASHSCOPE_API_KEY is not configured")
+        if self.client is None:
+            self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        return self.client
         
     def encode_image_to_base64(self, image_path: str) -> str:
         """
@@ -130,7 +132,7 @@ class CertificateRecognitionServiceOpenAI:
 - 只返回JSON，不要有任何解释性文字"""
             
             # Create chat completion request with vision
-            completion = self.client.chat.completions.create(
+            completion = self._get_client().chat.completions.create(
                 model=self.model_name,
                 messages=[
                     {
@@ -225,7 +227,7 @@ class CertificateRecognitionServiceOpenAI:
         """
         try:
             image_base64 = self.encode_image_to_base64(image_path)
-            completion = self.client.chat.completions.create(
+            completion = self._get_client().chat.completions.create(
                 model=self.model_name,
                 messages=[{
                     "role": "user",
@@ -321,7 +323,7 @@ class CertificateRecognitionServiceOpenAI:
 
 只返回JSON，不要有任何解释性文字。"""
 
-            completion = self.client.chat.completions.create(
+            completion = self._get_client().chat.completions.create(
                 model=self.model_name,
                 messages=[{
                     "role": "user",
@@ -421,7 +423,7 @@ class CertificateRecognitionServiceOpenAI:
             translate_input["authors"] = authors
 
         try:
-            text_client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+            text_client = self._get_client()
             prompt = f"""请将以下英文学术论文信息翻译为中文。对于人名请音译为常见中文译名，如果是中国人名的拼音则还原为中文姓名。
 
 输入：
@@ -814,7 +816,7 @@ class CertificateRecognitionServiceOpenAI:
         try:
             image_path = self._preprocess_image(image_path)
             image_base64 = self.encode_image_to_base64(image_path)
-            completion = self.client.chat.completions.create(
+            completion = self._get_client().chat.completions.create(
                 model=self.model_name,
                 messages=[{
                     "role": "user",
