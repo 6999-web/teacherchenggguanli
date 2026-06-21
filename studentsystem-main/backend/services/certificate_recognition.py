@@ -1,0 +1,3 @@
+from services.certificate_recognition_openai import certificate_recognition_service_openai as certificate_recognition_service
+
+__all__ = ["certificate_recognition_service"]

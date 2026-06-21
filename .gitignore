@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+env/
+ENV/
+
+# Build output and caches
+dist/
+.vite/
+.cache/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Runtime files
+.env
+.env.*
+!.env.example
+!studentsystem-main/frontend/.env.production
+!studentsystem-main/admin/.env.production
+*.log
+logs/*.log
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+uploads/
+
+# Local archives and generated packages
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Large reference documents
+*.pdf
