@@ -24,9 +24,9 @@ class LoginRequest(BaseModel):
     )
     password: str = Field(
         ...,
-        min_length=6,
+        min_length=5,
         max_length=128,
-        description="Password must be 6-128 characters"
+        description="Password must be 5-128 characters"
     )
     
     @field_validator('username')
@@ -44,8 +44,8 @@ class LoginRequest(BaseModel):
         """Validate password - remove leading/trailing whitespace"""
         # Remove leading/trailing whitespace but preserve internal spaces
         v = v.strip()
-        if len(v) < 6:
-            raise ValueError('Password must be at least 6 characters after trimming')
+        if len(v) < 5:
+            raise ValueError('Password must be at least 5 characters after trimming')
         return v
 
 

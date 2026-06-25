@@ -46,3 +46,6 @@ Thumbs.db
 
 # Large reference documents
 *.pdf
+
+# Sensitive local documentation
+docs/SENSITIVE-*.md

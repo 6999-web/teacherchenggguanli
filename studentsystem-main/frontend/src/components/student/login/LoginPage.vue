@@ -10,7 +10,7 @@
     <div class="login-container">
       <div class="platform-header">
         <img class="platform-logo" src="/school-logo.jpg" alt="校徽" />
-        <h1>工作奖励体系</h1>
+        <h1>{{ systemTitle }}</h1>
       </div>
 
       <div class="login-box">
@@ -111,8 +111,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref, reactive, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   IconUser,
   IconArrowLeft,
@@ -125,17 +125,19 @@ import request from '@/utils/request'
 
 const message = useMessage()
 const router = useRouter()
+const route = useRoute()
 
 const loading = ref(false)
 const rememberPassword = ref(false)
 const formRef = ref<FormInst | null>(null)
+const systemTitle = computed(() => getSystemTitle(loginRedirectPath()))
 
 const form = reactive({ student_number: '', password: '' })
 const rules: FormRules = {
   student_number: [{ required: true, message: '请输入工号', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    { min: 5, message: '密码长度不能少于5位', trigger: 'blur' }
   ]
 }
 
@@ -162,6 +164,7 @@ const pwdRules: FormRules = {
 }
 
 onMounted(() => {
+  updateDocumentTitle()
   const saved = localStorage.getItem('savedStudentNumber')
   const savedPwd = localStorage.getItem('savedPassword')
   if (saved && savedPwd && localStorage.getItem('rememberPassword') === 'true') {
@@ -170,6 +173,8 @@ onMounted(() => {
     rememberPassword.value = true
   }
 })
+
+watch(systemTitle, updateDocumentTitle)
 
 const handleLogin = () => {
   formRef.value?.validate(async (errors) => {
@@ -199,7 +204,7 @@ const handleLogin = () => {
         showChangePwdModal.value = true
       } else {
         message.success('登录成功')
-        setTimeout(() => router.push('/student/achievement'), 300)
+        setTimeout(() => router.push(loginRedirectPath()), 300)
       }
     } catch (e: any) {
       const msg = e?.response?.data?.msg || e.message || '登录失败，请检查工号和密码是否正确'
@@ -221,7 +226,7 @@ const handleChangePwd = () => {
       })
       message.success('密码修改成功！')
       showChangePwdModal.value = false
-      setTimeout(() => router.push('/student/achievement'), 500)
+      setTimeout(() => router.push(loginRedirectPath()), 500)
     } catch (e: any) {
       message.error(e.message || '密码修改失败，请重试')
     } finally {
@@ -231,6 +236,24 @@ const handleChangePwd = () => {
 }
 
 const goToHome = () => router.push('/')
+
+function loginRedirectPath() {
+  const redirect = route.query.redirect
+  if (typeof redirect === 'string' && redirect.startsWith('/student/')) {
+    return redirect
+  }
+  return '/student/achievement'
+}
+
+function getSystemTitle(path: string) {
+  if (path.startsWith('/student/hr')) return '教师人事管理体系'
+  if (path.startsWith('/student/teaching-reward')) return '工作奖励体系'
+  return '教师成果管理平台'
+}
+
+function updateDocumentTitle() {
+  document.title = systemTitle.value
+}
 </script>
 
 <style scoped>

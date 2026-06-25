@@ -1,6 +1,6 @@
-<template>
+﻿<template>
   <div class="sidebar-container">
-    <!-- 顶部标题区域 -->
+    <!-- 椤堕儴鏍囬鍖哄煙 -->
     <div class="logo-container">
       <div class="logo-icon">
         <n-icon size="24" style="display: flex; align-items: center;">
@@ -8,11 +8,11 @@
         </n-icon>
       </div>
       <transition name="fade">
-        <h1 class="logo-title">工作奖励体系</h1>
+        <h1 class="logo-title">{{ systemTitle }}</h1>
       </transition>
     </div>
 
-    <!-- 中部菜单区域 -->
+    <!-- 涓儴鑿滃崟鍖哄煙 -->
     <div class="menu-container">
       <n-scrollbar style="max-height: 100%;">
         <div class="menu-wrapper">
@@ -39,7 +39,7 @@
       </n-scrollbar>
     </div>
 
-    <!-- 底部用户信息区域 -->
+    <!-- 搴曢儴鐢ㄦ埛淇℃伅鍖哄煙 -->
     <div class="user-container">
       <n-dropdown :options="user_options" @select="handleUserSelect" trigger="click">
         <div class="user-info">
@@ -69,22 +69,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, h, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { NIcon, NDropdown, NAvatar, NScrollbar } from 'naive-ui'
+import { computed, h, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { NAvatar, NDropdown, NIcon, NScrollbar } from 'naive-ui'
 import {
-  IconChartBar,
+  CaretDown,
   IconAward,
-  IconMessageCircle,
-  IconUser,
+  IconChartBar,
+  IconFileText,
   IconLogout,
-  IconSettings,
+  IconMessageCircle,
   IconSchool,
-  IconCamera,
-  CaretDown
+  IconUser,
 } from '../utils/icons'
-import { getStudentMe, getStudentProfile, updateAvatar } from '@/api'
-import { useMessage } from 'naive-ui'
+import { getStudentMe, getStudentProfile } from '@/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -92,223 +90,129 @@ const user_name = ref('加载中...')
 const username = computed(() => user_name.value)
 const user_role = ref('教师')
 const user_avatar = ref('')
-const user_email = ref('')
-const user_confirmed = ref(false)
-const user_blocked = ref(false)
 const activeMenu = ref('achievement')
 const loading = ref(false)
+const systemTitle = computed(() => {
+  if (route.path.startsWith('/student/hr')) return '教师人事管理体系'
+  if (route.path.startsWith('/student/teaching-reward')) return '工作奖励体系'
+  return '教师成果管理平台'
+})
 
-const msg = useMessage()
-
-// 默认人员头像
 const default_avatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e0e0e0"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>'
 
-// 头像显示URL：有自定义头像则用，否则返回空让fallback生效
 const avatarDisplayUrl = computed(() => {
   if (!user_avatar.value) return default_avatar
-  // 如果是相对路径，拼上后端地址
   if (user_avatar.value.startsWith('/uploads/')) {
     const token = localStorage.getItem('token')
-    return user_avatar.value + (token ? `?token=${token}` : '')
+    return user_avatar.value + (token ? `?token=${encodeURIComponent(token)}` : '')
   }
   return user_avatar.value
 })
 
-// 触发头像文件选择（逻辑移除）
-
-
 const menu_items = ref([
   { label: '成果收集与展示', key: 'achievement', icon: () => h(IconAward) },
+  { label: '教师个人档案', key: 'hr_profile', icon: () => h(IconFileText) },
+  { label: '教学奖励申报', key: 'teaching_reward_apply', icon: () => h(IconAward) },
+  { label: '人事附件', key: 'hr_attachments', icon: () => h(IconFileText) },
+  { label: '历年绩效', key: 'hr_performance', icon: () => h(IconChartBar) },
+  { label: '职称自查', key: 'hr_title', icon: () => h(IconAward) },
   { label: 'AI智能分析', key: 'portrait_analysis', icon: () => h(IconChartBar) },
   { label: 'AI学习助手', key: 'portrait_chat', icon: () => h(IconMessageCircle) },
-  { label: '个人资料', key: 'profile', icon: () => h(IconUser) }
+  { label: '个人资料', key: 'profile', icon: () => h(IconUser) },
 ])
 
-/* ---------- 用户下拉 ---------- */
 const user_options = ref([
-  { 
-    label: '个人资料', 
-    key: 'profile', 
-    icon: () => h(IconUser)
-  },
-  { 
-    type: 'divider' 
-  },
-  { 
-    label: '退出登录', 
-    key: 'logout', 
-    icon: () => h(IconLogout)
-  }
+  { label: '个人资料', key: 'profile', icon: () => h(IconUser) },
+  { type: 'divider' },
+  { label: '退出登录', key: 'logout', icon: () => h(IconLogout) },
 ])
 
-/* ---------- 获取用户信息 ---------- */
-const fetchUserInfo = async () => {
+async function fetchUserInfo() {
+  loading.value = true
   try {
-    loading.value = true
-    console.log('开始获取用户信息...')
-    
-    // 检查是否有token
-    const token = localStorage.getItem('token')
-    console.log('当前token:', token ? '存在' : '不存在')
-    
-    // 获取基本用户信息
-    console.log('调用getStudentMe API...')
     const userResponse = await getStudentMe()
-    console.log('getStudentsMe响应:', userResponse)
-    
-    if (userResponse) {
-      // 设置基本用户信息 - 优先使用档案姓名
-      user_name.value = userResponse.name || userResponse.username || '用户'
-      user_email.value = userResponse.email || ''
-      user_confirmed.value = userResponse.confirmed || false
-      user_blocked.value = userResponse.blocked || false
-      
-      console.log('设置用户基本信息:', {
-        name: user_name.value,
-        email: user_email.value,
-        confirmed: user_confirmed.value,
-        blocked: user_blocked.value
-      })
-      
-      // 设置用户角色
-      if (userResponse.role) {
-        // 后端可能返回字符串或对象
-        const roleName = typeof userResponse.role === 'string' ? userResponse.role : userResponse.role.name
-        user_role.value = roleName === 'student' ? '教师' : (roleName === 'admin' ? '管理员' : roleName)
-        console.log('设置用户角色:', user_role.value)
-      }
-    } else {
-      console.warn('getStudentsMe返回空响应')
-    }
-    
-    // 尝试获取详细档案信息
+    user_name.value = userResponse?.name || userResponse?.username || '教师'
+    const roleName = typeof userResponse?.role === 'string' ? userResponse.role : userResponse?.role?.name
+    user_role.value = roleName === 'admin' ? '管理员' : '教师'
     try {
-      console.log('调用getStudentProfile API...')
       const profileResponse = await getStudentProfile()
-      console.log('getStudentsProfile响应:', profileResponse)
-      
-      // 修正：后端返回的是 basic_info 字段
-      if (profileResponse && profileResponse.basic_info) {
-        // 如果档案中有姓名，优先使用档案中的姓名
-        if (profileResponse.basic_info.name) {
-          user_name.value = profileResponse.basic_info.name
-          console.log('使用档案姓名:', user_name.value)
-        }
-        // 设置头像
-        if (profileResponse.basic_info.avatar_url) {
-          user_avatar.value = profileResponse.basic_info.avatar_url
-          console.log('设置用户头像:', user_avatar.value)
-        }
-      } else {
-        console.warn('getStudentsProfile返回空档案信息')
-      }
-    } catch (profileError) {
-      // 档案信息获取失败时，继续使用基本用户信息
-      console.warn('获取用户档案信息失败:', profileError)
+      if (profileResponse?.basic_info?.name) user_name.value = profileResponse.basic_info.name
+      if (profileResponse?.basic_info?.avatar_url) user_avatar.value = profileResponse.basic_info.avatar_url
+    } catch (error) {
+      console.warn('获取教师档案信息失败:', error)
     }
-    
-    console.log('用户信息获取完成')
-    
   } catch (error: any) {
-    console.error('获取用户信息失败:', error)
-    console.error('错误详情:', {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data
-    })
-    
-    // 如果是401错误，说明需要登录
-    if (error.response?.status === 401) {
-      console.warn('用户未登录，显示默认信息')
-      user_name.value = '未登录用户'
-    } else {
-      user_name.value = '用户'
-    }
+    user_name.value = error?.response?.status === 401 ? '未登录用户' : '教师'
     user_role.value = '教师'
   } finally {
     loading.value = false
   }
 }
 
-/* ---------- 组件挂载时初始化 ---------- */
-onMounted(() => {
-  // 根据当前路由设置活跃菜单
-  updateActiveMenu()
-  // 获取用户信息
-  fetchUserInfo()
-})
-
-/* ---------- 监听路由变化 ---------- */
-// 侧边栏监听全局头像更新事件
-const handleGlobalAvatarUpdate = (e: any) => {
-  if (e.detail && e.detail.url) {
-    user_avatar.value = e.detail.url
-  }
+const pathToMenu: Record<string, string> = {
+  '/student/achievement': 'achievement',
+  '/student/achievement-collect': 'achievement',
+  '/student/achievement-detail': 'achievement',
+  '/student/certificate-ocr': 'achievement',
+  '/student/hr-profile': 'hr_profile',
+  '/student/teaching-reward-apply': 'teaching_reward_apply',
+  '/student/hr-attachments': 'hr_attachments',
+  '/student/hr-performance': 'hr_performance',
+  '/student/hr-title': 'hr_title',
+  '/student/portrait': 'portrait_analysis',
+  '/student/portrait/ai-chat': 'portrait_chat',
+  '/student/profile': 'profile',
 }
 
-watch(() => route.path, () => {
-  updateActiveMenu()
-}, { immediate: true })
+const menuToPath: Record<string, string> = {
+  achievement: '/student/achievement',
+  hr_profile: '/student/hr-profile',
+  teaching_reward_apply: '/student/teaching-reward-apply',
+  hr_attachments: '/student/hr-attachments',
+  hr_performance: '/student/hr-performance',
+  hr_title: '/student/hr-title',
+  portrait_analysis: '/student/portrait',
+  portrait_chat: '/student/portrait/ai-chat',
+  profile: '/student/profile',
+}
+
+function updateActiveMenu() {
+  const matched = Object.entries(pathToMenu).find(([path]) => route.path.startsWith(path))
+  activeMenu.value = matched?.[1] || 'achievement'
+  document.title = `${String(route.meta.title || systemTitle.value)} - ${systemTitle.value}`
+}
+
+function handleMenuClick(key: string) {
+  activeMenu.value = key
+  if (menuToPath[key]) router.push(menuToPath[key])
+}
+
+function handleUserSelect(key: string) {
+  if (key === 'logout') handleLogout()
+  if (key === 'profile') router.push('/student/profile')
+}
+
+function handleLogout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('userInfo')
+  router.push('/student/login')
+}
+
+function handleGlobalAvatarUpdate(e: any) {
+  if (e.detail?.url) user_avatar.value = e.detail.url
+}
+
+watch(() => route.path, updateActiveMenu, { immediate: true })
 
 onMounted(() => {
+  updateActiveMenu()
+  fetchUserInfo()
   window.addEventListener('avatar-updated', handleGlobalAvatarUpdate)
 })
 
-import { onUnmounted } from 'vue'
 onUnmounted(() => {
   window.removeEventListener('avatar-updated', handleGlobalAvatarUpdate)
 })
-
-/* ---------- 更新活跃菜单 ---------- */
-function updateActiveMenu() {
-  const path = route.path
-  const routeMap: Record<string, string> = {
-    '/student/achievement': 'achievement',
-    '/student/achievement-collect': 'achievement',
-    '/student/achievement-detail': 'achievement',
-    '/student/certificate-ocr': 'achievement',
-    '/student/portrait': 'portrait_analysis',
-    '/student/portrait/ai-chat': 'portrait_chat',
-    '/student/profile': 'profile'
-  }
-
-  activeMenu.value = routeMap[path] || 'achievement'
-}
-
-/* ---------- 菜单点击 ---------- */
-function handleMenuClick(key: string) {
-  activeMenu.value = key
-  
-  const routeMap: Record<string, string> = {
-    achievement: '/student/achievement',
-    portrait_analysis: '/student/portrait',
-    portrait_chat: '/student/portrait/ai-chat',
-    profile: '/student/profile'
-  }
-  
-  if (routeMap[key]) {
-    router.push(routeMap[key])
-  }
-  
-}
-
-/* ---------- 用户下拉选择 ---------- */
-function handleUserSelect(key: string) {
-  if (key === 'logout') {
-    handleLogout()
-  } else if (key === 'profile') {
-    router.push('/student/profile')
-  }
-}
-
-/* ---------- 登出处理 ---------- */
-function handleLogout() {
-  // 清除认证信息
-  localStorage.removeItem('token')
-  localStorage.removeItem('userInfo')
-  // 跳转到教师端登录页
-  router.push('/student/login')
-}
 </script>
 
 <style scoped>

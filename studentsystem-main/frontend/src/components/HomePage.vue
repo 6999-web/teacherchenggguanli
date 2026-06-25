@@ -1,6 +1,6 @@
-﻿<template>
+<template>
   <div class="home-container">
-    <section class="login-shell">
+    <section class="home-shell">
       <div class="platform-title">
         <div class="icon-box">
           <n-icon size="32" class="title-icon">
@@ -8,28 +8,44 @@
           </n-icon>
         </div>
         <div>
-          <h1>工作奖励体系</h1>
-          <p>请选择登录入口</p>
+          <h1>教师综合管理平台</h1>
+          <p>评价体系、工作奖励体系、教师人事管理体系统一入口</p>
         </div>
       </div>
 
-      <div class="login-options">
-        <button class="login-card" type="button" @click="goToStudentLogin">
+      <div class="system-grid">
+        <button class="system-card evaluation-card" type="button" @click="goToStudentLogin">
           <span class="card-icon">
-            <IconUser :size="34" />
+            <IconChartBar :size="34" />
           </span>
-          <span class="card-title">教师端登录</span>
-          <span class="card-desc">提交教学成果材料，查看审核与奖励认定</span>
-          <span class="card-action">进入教师端</span>
+          <span class="card-title">评价管理体系</span>
+          <span class="card-desc">保留现有教学评价与分析能力，查看评价结果和教学画像。</span>
+          <span class="card-action">进入评价体系</span>
         </button>
 
-        <button class="login-card admin-card" type="button" @click="goToAdminLogin">
+        <button class="system-card reward-card" type="button" @click="goToReward">
           <span class="card-icon">
-            <IconShieldCheck :size="34" />
+            <IconAward :size="34" />
           </span>
-          <span class="card-title">管理端登录</span>
-          <span class="card-desc">审核成果材料，管理奖励认定流程</span>
-          <span class="card-action">进入管理端</span>
+          <span class="card-title">工作奖励体系</span>
+          <span class="card-desc">教学成果申报、奖励规则匹配、奖励认定审核、年度批次发放。</span>
+          <span class="card-action">进入奖励体系</span>
+        </button>
+
+        <button class="system-card hr-card" type="button" @click="goToHr">
+          <span class="card-icon">
+            <IconUsers :size="34" />
+          </span>
+          <span class="card-title">教师人事管理体系</span>
+          <span class="card-desc">教师一张表、档案附件、绩效记录、职称自查与材料缺口提醒。</span>
+          <span class="card-action">进入人事体系</span>
+        </button>
+      </div>
+
+      <div class="admin-entry">
+        <button type="button" @click="goToAdminLogin">
+          <IconShieldCheck :size="18" />
+          管理端入口
         </button>
       </div>
     </section>
@@ -39,9 +55,11 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import {
-  IconUser,
+  IconAward,
+  IconChartBar,
   IconSchool,
-  IconShieldCheck
+  IconShieldCheck,
+  IconUsers
 } from '@tabler/icons-vue'
 
 const router = useRouter()
@@ -49,6 +67,14 @@ const adminLoginUrl = import.meta.env.VITE_ADMIN_LOGIN_URL || 'http://localhost:
 
 const goToStudentLogin = () => {
   router.push('/student/login')
+}
+
+const goToReward = () => {
+  router.push('/student/login?redirect=/student/teaching-reward-apply')
+}
+
+const goToHr = () => {
+  router.push('/student/login?redirect=/student/hr-profile')
 }
 
 const goToAdminLogin = () => {
@@ -60,16 +86,16 @@ const goToAdminLogin = () => {
 .home-container {
   min-height: 100vh;
   width: 100%;
-  background: #333f89;
+  background: #f4f7fb;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 24px;
+  padding: 28px;
   box-sizing: border-box;
 }
 
-.login-shell {
-  width: min(920px, 100%);
+.home-shell {
+  width: min(1120px, 100%);
 }
 
 .platform-title {
@@ -78,7 +104,7 @@ const goToAdminLogin = () => {
   justify-content: center;
   gap: 14px;
   margin-bottom: 28px;
-  color: #ffffff;
+  color: #0f172a;
 }
 
 .icon-box {
@@ -87,9 +113,9 @@ const goToAdminLogin = () => {
   align-items: center;
   width: 52px;
   height: 52px;
-  background-color: #1890ff;
-  border-radius: 6px;
-  box-shadow: 0 10px 22px rgba(24, 144, 255, 0.28);
+  background-color: #1d4ed8;
+  border-radius: 8px;
+  box-shadow: 0 10px 22px rgba(29, 78, 216, 0.22);
 }
 
 .title-icon {
@@ -105,53 +131,52 @@ const goToAdminLogin = () => {
 
 .platform-title p {
   margin: 6px 0 0;
-  color: rgba(255, 255, 255, 0.82);
+  color: #64748b;
   font-size: 15px;
 }
 
-.login-options {
+.system-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
 }
 
-.login-card {
+.system-card {
   appearance: none;
-  border: 1px solid rgba(24, 144, 255, 0.16);
-  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #dbe3ef;
+  background: #ffffff;
   border-radius: 8px;
-  padding: 34px 28px;
+  padding: 30px 24px;
   min-height: 260px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
   cursor: pointer;
-  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.login-card:hover {
+.system-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(24, 144, 255, 0.4);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+  border-color: #93c5fd;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.13);
 }
 
 .card-icon {
-  width: 68px;
-  height: 68px;
+  width: 64px;
+  height: 64px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  background: linear-gradient(135deg, #1890ff, #096dd9);
   border-radius: 8px;
   margin-bottom: 18px;
 }
 
-.admin-card .card-icon {
-  background: linear-gradient(135deg, #0f766e, #134e4a);
-}
+.evaluation-card .card-icon { background: #2563eb; }
+.reward-card .card-icon { background: #0f766e; }
+.hr-card .card-icon { background: #7c3aed; }
 
 .card-title {
   font-size: 22px;
@@ -161,24 +186,39 @@ const goToAdminLogin = () => {
 }
 
 .card-desc {
-  min-height: 44px;
+  min-height: 72px;
   color: #64748b;
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .card-action {
   margin-top: auto;
-  color: #096dd9;
+  color: #1d4ed8;
   font-size: 15px;
   font-weight: 600;
 }
 
-.admin-card .card-action {
-  color: #0f766e;
+.admin-entry {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
 }
 
-@media (max-width: 720px) {
+.admin-entry button {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
   .platform-title {
     justify-content: flex-start;
   }
@@ -187,11 +227,11 @@ const goToAdminLogin = () => {
     font-size: 28px;
   }
 
-  .login-options {
+  .system-grid {
     grid-template-columns: 1fr;
   }
 
-  .login-card {
+  .system-card {
     min-height: 220px;
   }
 }

@@ -7,8 +7,7 @@ import { RouteRecordRaw } from 'vue-router'
 export const publicRoutes: Array<RouteRecordRaw> = [
     {
         path: '/',
-        name: 'home',
-        component: () => import('../components/HomePage.vue'),
+        redirect: '/student/login',
         meta: { title: '首页' }
     },
     {

@@ -261,6 +261,49 @@ export function auditAchievement(achievementId: number, data: AuditAchievementRe
     return request.patch(`/api/v1/admin/achievements/${achievementId}/audit`, data)
 }
 
+// ==================== 人事档案与奖励认定 ====================
+
+export function getHrDashboard(): Promise<any> {
+    return request.get('/api/v1/hr/dashboard')
+}
+
+export function getHrProfile(): Promise<any> {
+    return request.get('/api/v1/hr/profile')
+}
+
+export function submitHrProfileChange(data: any): Promise<any> {
+    return request.post('/api/v1/hr/profile/change-request', data)
+}
+
+export function getHrAttachments(): Promise<any> {
+    return request.get('/api/v1/hr/attachments')
+}
+
+export function uploadHrAttachment(file: File, attachmentType: string, title: string): Promise<any> {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('attachment_type', attachmentType)
+    formData.append('title', title)
+    return request.post('/api/v1/hr/attachments', formData)
+}
+
+export function getHrPerformance(): Promise<any> {
+    return request.get('/api/v1/hr/performance')
+}
+
+export function getHrTitleGap(targetTitle?: string): Promise<any> {
+    const params = targetTitle ? { target_title: targetTitle } : {}
+    return request.get('/api/v1/hr/title-gap', { params })
+}
+
+export function getMyRewardRecognitions(): Promise<any> {
+    return request.get('/api/v1/hr/reward-recognitions')
+}
+
+export function createMyRewardRecognition(data: any): Promise<any> {
+    return request.post('/api/v1/hr/reward-recognitions', data)
+}
+
 // ==================== 工具函数 ====================
 
 /**
@@ -447,6 +490,15 @@ export default {
     // 管理员
     getAchievementsForReview,
     auditAchievement,
+    getHrDashboard,
+    getHrProfile,
+    submitHrProfileChange,
+    getHrAttachments,
+    uploadHrAttachment,
+    getHrPerformance,
+    getHrTitleGap,
+    getMyRewardRecognitions,
+    createMyRewardRecognition,
     // 活动
     getActivities,
     getActivityById,

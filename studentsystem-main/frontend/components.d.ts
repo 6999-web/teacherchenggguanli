@@ -23,6 +23,10 @@ declare module 'vue' {
     Feedback: typeof import('./src/components/student/feedback/feedback.vue')['default']
     FloatingAiAssistant: typeof import('./src/components/common/FloatingAiAssistant.vue')['default']
     HomePage: typeof import('./src/components/HomePage.vue')['default']
+    HrAttachments: typeof import('./src/components/student/hr/HrAttachments.vue')['default']
+    HrPerformance: typeof import('./src/components/student/hr/HrPerformance.vue')['default']
+    HrProfile: typeof import('./src/components/student/hr/HrProfile.vue')['default']
+    HrTitleCheck: typeof import('./src/components/student/hr/HrTitleCheck.vue')['default']
     Jobpage: typeof import('./src/components/student/job/jobpage.vue')['default']
     LoginPage: typeof import('./src/components/student/login/LoginPage.vue')['default']
     PortraitAnalysis: typeof import('./src/components/student/portrait/portrait-analysis.vue')['default']
@@ -33,6 +37,7 @@ declare module 'vue' {
     TalentMarket: typeof import('./src/components/student/talent-market/talent-market.vue')['default']
     TeacherDetail: typeof import('./src/components/student/teachers/TeacherDetail.vue')['default']
     Teachers: typeof import('./src/components/student/teachers/teachers.vue')['default']
+    TeachingRewardApply: typeof import('./src/components/student/hr/TeachingRewardApply.vue')['default']
     VoteSurvey: typeof import('./src/components/student/vote-survey/vote-survey.vue')['default']
   }
 }

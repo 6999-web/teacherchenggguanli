@@ -11,7 +11,7 @@ from database import init_db
 import os
 
 # Import routers
-from routers import auth, common, student, admin, certificate, activities, courses
+from routers import auth, common, student, admin, certificate, activities, courses, hr, admin_hr
 
 # Create FastAPI app
 app = FastAPI(
@@ -44,6 +44,9 @@ app.include_router(auth.router)
 app.include_router(common.router)
 app.include_router(student.router)
 app.include_router(admin.router)
+app.include_router(hr.router)
+app.include_router(admin_hr.router)
+app.include_router(admin_hr.reward_router)
 app.include_router(certificate.router)
 app.include_router(activities.router)
 app.include_router(courses.router)

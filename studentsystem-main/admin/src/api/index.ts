@@ -26,6 +26,74 @@ export function auditAchievement(achievementId: number, data: AuditAchievementRe
     return request.patch(`/api/v1/admin/achievements/${achievementId}/audit`, data)
 }
 
+export function getHrTeachers(params?: any): Promise<any> {
+    return request.get('/api/v1/admin/hr/teachers', { params })
+}
+
+export function getHrTeacherDetail(profileId: number): Promise<any> {
+    return request.get(`/api/v1/admin/hr/teachers/${profileId}`)
+}
+
+export function getHrChangeRequests(params?: any): Promise<any> {
+    return request.get('/api/v1/admin/hr/change-requests', { params })
+}
+
+export function auditHrChangeRequest(requestId: number, data: any): Promise<any> {
+    return request.patch(`/api/v1/admin/hr/change-requests/${requestId}/audit`, data)
+}
+
+export function createHrPerformance(data: any): Promise<any> {
+    return request.post('/api/v1/admin/hr/performance', data)
+}
+
+export function createHrTitleRule(data: any): Promise<any> {
+    return request.post('/api/v1/admin/hr/title-rules', data)
+}
+
+export function getHrTitleRules(): Promise<any> {
+    return request.get('/api/v1/admin/hr/title-rules')
+}
+
+export function getRewardRecognitions(params?: any): Promise<any> {
+    return request.get('/api/v1/admin/reward/recognitions', { params })
+}
+
+export function createRewardRecognition(data: any): Promise<any> {
+    return request.post('/api/v1/admin/reward/recognitions', data)
+}
+
+export function auditRewardRecognition(id: number, data: any): Promise<any> {
+    return request.patch(`/api/v1/admin/reward/recognitions/${id}/audit`, data)
+}
+
+export function getRewardBatches(): Promise<any> {
+    return request.get('/api/v1/admin/reward/batches')
+}
+
+export function createRewardBatch(data: any): Promise<any> {
+    return request.post('/api/v1/admin/reward/batches', data)
+}
+
+export function getRewardRules(): Promise<any> {
+    return request.get('/api/v1/admin/reward/rules')
+}
+
+export function createRewardRule(data: any): Promise<any> {
+    return request.post('/api/v1/admin/reward/rules', data)
+}
+
+export function getCompetitionCatalog(): Promise<any> {
+    return request.get('/api/v1/admin/reward/competitions')
+}
+
+export function createCompetitionCatalog(data: any): Promise<any> {
+    return request.post('/api/v1/admin/reward/competitions', data)
+}
+
+export function initRewardPolicy2024(): Promise<any> {
+    return request.post('/api/v1/admin/reward/policy-2024/init')
+}
+
 // ==================== 工具函数 ====================
 
 export function getFileUrl(relativePath: string): string {
@@ -80,6 +148,23 @@ export default {
     login,
     getAchievementsForReview,
     auditAchievement,
+    getHrTeachers,
+    getHrTeacherDetail,
+    getHrChangeRequests,
+    auditHrChangeRequest,
+    createHrPerformance,
+    createHrTitleRule,
+    getHrTitleRules,
+    getRewardRecognitions,
+    createRewardRecognition,
+    auditRewardRecognition,
+    getRewardBatches,
+    createRewardBatch,
+    getRewardRules,
+    createRewardRule,
+    getCompetitionCatalog,
+    createCompetitionCatalog,
+    initRewardPolicy2024,
     getFileUrl,
     formatDate
 }
