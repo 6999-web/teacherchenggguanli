@@ -8,11 +8,13 @@
         <n-form-item label="材料名称">
           <n-input v-model:value="form.title" placeholder="如：硕士学位证书" />
         </n-form-item>
-        <n-upload :custom-request="uploadFile" :show-file-list="false">
+        <n-upload :custom-request="uploadFile" :show-file-list="false" accept=".jpg,.jpeg,.png,.bmp,.gif,.pdf">
           <n-button type="primary">上传归档</n-button>
         </n-upload>
       </n-form>
+
       <n-data-table :columns="columns" :data="rows" :loading="loading" />
+      <n-empty v-if="!loading && rows.length === 0" description="暂无人事附件" class="empty-state" />
     </n-card>
   </div>
 </template>
@@ -32,15 +34,33 @@ const columns = [
   { title: '材料类型', key: 'attachment_type' },
   { title: '材料名称', key: 'title' },
   { title: '文件名', key: 'original_filename' },
-  { title: '上传时间', key: 'created_at' },
+  { title: '状态', key: 'status', render: (row: any) => statusText(row.status) },
+  { title: '上传时间', key: 'created_at', render: (row: any) => formatTime(row.created_at) },
   {
     title: '操作',
     key: 'actions',
     render(row: any) {
-      return h(NButton, { size: 'small', onClick: () => window.open(getFileUrl(row.file_url), '_blank') }, { default: () => '查看' })
+      return h(NButton, { size: 'small', disabled: !row.file_url, onClick: () => openFile(row) }, { default: () => '查看' })
     }
   }
 ]
+
+function statusText(status: string) {
+  return ({ active: '有效', archived: '已归档' } as Record<string, string>)[status] || status || '-'
+}
+
+function formatTime(value: string) {
+  if (!value) return '-'
+  return new Date(value).toLocaleString()
+}
+
+function openFile(row: any) {
+  if (!row.file_url) {
+    message.warning('该附件没有可查看的文件地址')
+    return
+  }
+  window.open(getFileUrl(row.file_url), '_blank')
+}
 
 async function loadRows() {
   loading.value = true
@@ -52,14 +72,19 @@ async function loadRows() {
 }
 
 async function uploadFile({ file, onFinish, onError }: any) {
-  if (!form.title) {
+  if (!form.title.trim()) {
     message.warning('请先填写材料名称')
     onError()
     return
   }
+  if (!file?.file) {
+    message.warning('请选择要上传的文件')
+    onError()
+    return
+  }
   try {
-    await uploadHrAttachment(file.file, form.attachmentType, form.title)
-    message.success('附件已归档')
+    await uploadHrAttachment(file.file, form.attachmentType, form.title.trim())
+    message.success('附件已归档，管理端教师档案详情中可以查看')
     form.title = ''
     await loadRows()
     onFinish()
@@ -72,6 +97,15 @@ onMounted(loadRows)
 </script>
 
 <style scoped>
-.hr-page { padding: 20px; }
-.upload-form { margin-bottom: 16px; }
+.hr-page {
+  padding: 20px;
+}
+
+.upload-form {
+  margin-bottom: 16px;
+}
+
+.empty-state {
+  margin-top: 18px;
+}
 </style>

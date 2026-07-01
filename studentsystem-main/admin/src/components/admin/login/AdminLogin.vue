@@ -1,5 +1,9 @@
 ﻿<template>
   <div class="admin-login-container">
+    <button class="back-home" type="button" @click="goToPortal">
+      ← 返回首页
+    </button>
+
     <!-- 左侧装饰区域 -->
     <div class="left-decoration">
       <div class="decoration-content">
@@ -43,8 +47,8 @@
         </div>
         
         <div class="welcome-text">
-          <h1>工作奖励体系</h1>
-          <p>奖励认定 · 审核管理</p>
+          <h1>教师人事管理体系</h1>
+          <p>档案维护 · 绩效管理</p>
         </div>
       </div>
     </div>
@@ -54,7 +58,7 @@
       <div class="form-container">
         <div class="form-header">
           <h2>您好！</h2>
-          <p class="form-subtitle">欢迎来到工作奖励体系管理端</p>
+          <p class="form-subtitle">欢迎来到教师人事管理体系管理端</p>
         </div>
 
         <el-form
@@ -111,7 +115,7 @@
 
     <!-- 底部版权信息 -->
     <div class="copyright">
-      <p>© 2024 工作奖励体系 | 版权所有</p>
+      <p>© 2024 教师人事管理体系 | 版权所有</p>
     </div>
   </div>
 </template>
@@ -189,6 +193,10 @@ const handleLogin = async () => {
 const goToStudentLogin = () => {
   window.location.href = import.meta.env.VITE_STUDENT_LOGIN_URL || 'http://localhost:5004/student/login'
 }
+
+const goToPortal = () => {
+  window.location.href = 'http://localhost:5001/'
+}
 </script>
 
 <style scoped>
@@ -200,6 +208,26 @@ const goToStudentLogin = () => {
   height: 100vh;
   background: #333f89;
   overflow: hidden;
+}
+
+.back-home {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.back-home:hover {
+  color: rgba(255, 255, 255, 0.82);
 }
 
 /* 背景装饰元素 */

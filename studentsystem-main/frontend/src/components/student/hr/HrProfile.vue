@@ -66,7 +66,7 @@
             <div>
               <strong>{{ label(categoryMap, item.category) }}</strong>
               <span>{{ label(levelMap, item.level) }} / {{ label(rankMap, item.rank) }}</span>
-              <small>{{ requestText(item.calculation_detail?.request_data) }}</small>
+              <small>{{ rewardContent(item) }}</small>
             </div>
             <div class="reward-amount">
               <strong>{{ money(item.final_amount) }}</strong>
@@ -90,6 +90,15 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useMessage } from 'naive-ui'
 import { getHrDashboard, submitHrProfileChange } from '@/api'
+import {
+  categoryMap,
+  levelMap,
+  money,
+  rankMap,
+  rewardContentLabel,
+  rewardRules2024,
+  type RewardRuleOption,
+} from '@/utils/teaching-reward-policy'
 
 const message = useMessage()
 const profile = ref<any>({})
@@ -101,37 +110,7 @@ const titleGap = ref<any>(null)
 const submitting = ref(false)
 const editForm = reactive<any>({})
 
-const categoryMap: Record<string, string> = {
-  teaching_achievement: '教学成果类',
-  major_construction: '专业建设类',
-  course_construction: '课程建设类',
-  textbook_construction: '教材建设类',
-  practice_teaching: '实践教学类',
-  teaching_competition: '教学竞赛类',
-  teaching_team: '教师队伍类',
-  teaching_reform: '教学改革项目奖',
-  teaching_quality: '教学质量奖',
-  lecture_competition: '讲课比赛奖',
-  ideological_political: '思政专项奖',
-}
-const levelMap: Record<string, string> = {
-  national: '国家级',
-  provincial: '省部级',
-  municipal: '市厅级',
-  school: '校级',
-}
-const rankMap: Record<string, string> = {
-  grand_prize: '特等奖',
-  first_prize: '一等奖',
-  second_prize: '二等奖',
-  third_prize: '三等奖',
-}
-
 const performanceText = computed(() => currentPerformance.value ? `${currentPerformance.value.final_score} / ${currentPerformance.value.grade || '-'}` : '暂无')
-
-function money(value: number) {
-  return `${Number(value || 0).toLocaleString('zh-CN')} 元`
-}
 
 function label(map: Record<string, string>, value: string) {
   return map[value] || value || '-'
@@ -142,14 +121,27 @@ function statusText(status: string) {
   return map[status] || status || '-'
 }
 
-function requestText(data: any) {
-  if (!data) return ''
-  return [
-    data.participation_type === 'guided_student' ? '指导学生' : data.participation_type === 'self' ? '本人参赛' : '',
-    data.competition_scope === 'group' ? '团体' : data.competition_scope === 'individual' ? '单项' : '',
-    data.project_stage === 'established' ? '立项阶段' : data.project_stage === 'completed' ? '结题阶段' : '',
-    data.project_type ? `项目类型：${data.project_type}` : '',
-  ].filter(Boolean).join(' · ')
+function matchingRule(item: any): RewardRuleOption | null {
+  const data = item?.calculation_detail?.request_data || {}
+  const category = data.category || item.category
+  const subcategory = category === 'teaching_competition'
+    ? data.competition_scope
+    : category === 'teaching_reform'
+      ? data.project_type
+      : data.subcategory
+  return rewardRules2024.find(rule => {
+    if (rule.category !== category) return false
+    if ((rule.subcategory || null) !== (subcategory || null)) return false
+    if ((rule.level || null) !== (data.level || item.level || null)) return false
+    if ((rule.rank || null) !== (data.rank || item.rank || null)) return false
+    return true
+  }) || null
+}
+
+function rewardContent(item: any) {
+  const rule = matchingRule(item)
+  if (rule) return rewardContentLabel(rule)
+  return item?.policy_basis || ''
 }
 
 async function loadData() {

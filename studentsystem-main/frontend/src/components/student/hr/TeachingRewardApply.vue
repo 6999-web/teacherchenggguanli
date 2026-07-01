@@ -5,58 +5,54 @@
         教学奖励申报和教师人事档案共用同一份认定数据。这里提交后，会自动同步到“教师人事管理体系”的个人档案中。
       </n-alert>
 
-      <n-form :model="form" label-placement="left" label-width="110">
-        <n-grid :cols="2" :x-gap="16" responsive="screen">
-          <n-grid-item>
-            <n-form-item label="奖励类别">
-              <n-select v-model:value="form.category" :options="categoryOptions" />
-            </n-form-item>
-          </n-grid-item>
-          <n-grid-item>
-            <n-form-item label="级别">
-              <n-select v-model:value="form.level" :options="levelOptions" />
-            </n-form-item>
-          </n-grid-item>
-          <n-grid-item>
-            <n-form-item label="等级">
-              <n-select v-model:value="form.rank" :options="rankOptions" />
-            </n-form-item>
-          </n-grid-item>
-          <n-grid-item>
-            <n-form-item label="竞赛类型">
-              <n-select v-model:value="form.competition_scope" :options="scopeOptions" />
-            </n-form-item>
-          </n-grid-item>
-          <n-grid-item>
-            <n-form-item label="参与方式">
-              <n-select v-model:value="form.participation_type" :options="participationOptions" />
-            </n-form-item>
-          </n-grid-item>
-          <n-grid-item>
-            <n-form-item label="教改阶段">
-              <n-select v-model:value="form.project_stage" :options="stageOptions" clearable />
-            </n-form-item>
-          </n-grid-item>
-          <n-grid-item>
-            <n-form-item label="项目类型">
-              <n-input v-model:value="form.project_type" placeholder="重点 / 一般 / A / B" />
-            </n-form-item>
-          </n-grid-item>
-          <n-grid-item>
-            <n-form-item label="教材字数">
-              <n-input-number v-model:value="form.word_count" :min="0" style="width: 100%" />
-            </n-form-item>
-          </n-grid-item>
-        </n-grid>
-      </n-form>
+      <div class="apply-table section-gap">
+        <div class="apply-head">
+          <span>奖励类别</span>
+          <span>奖励内容</span>
+          <span>奖励金额</span>
+          <span>操作</span>
+        </div>
 
-      <n-space>
-        <n-button type="primary" :loading="submitting" @click="submit">提交奖励认定</n-button>
+        <div v-for="(row, index) in rows" :key="row.id" class="apply-line">
+          <n-select
+            v-model:value="row.category"
+            :options="categoryOptions"
+            placeholder="选择奖励类别"
+            clearable
+            @update:value="handleCategoryChange(row)"
+          />
+          <n-select
+            v-model:value="row.ruleKey"
+            :options="contentOptions(row)"
+            :disabled="!row.category"
+            filterable
+            clearable
+            placeholder="选择奖励内容"
+          />
+          <n-input :value="rowAmountText(row)" readonly placeholder="自动显示" />
+          <n-button
+            tertiary
+            type="error"
+            :disabled="rows.length === 1"
+            @click="removeRow(index)"
+          >
+            删除
+          </n-button>
+        </div>
+      </div>
+
+      <n-space class="section-gap">
+        <n-button @click="addRow">添加一条新的内容</n-button>
+        <n-button type="primary" :loading="submitting" @click="submit">统一提交奖励认定</n-button>
         <n-button @click="loadExisting">读取已有数据</n-button>
       </n-space>
 
-      <n-alert v-if="result" type="success" class="section-gap">
-        已提交，拟认定金额：{{ money(result.final_amount) }}。该记录已同步到人事档案。
+      <n-alert v-if="selectedRules.length > 0" type="success" class="section-gap">
+        当前已选择 {{ selectedRules.length }} 条奖励内容，预计总金额：{{ money(totalAmount) }}。
+      </n-alert>
+
+      <n-alert v-if="submitSummary" type="success" class="section-gap">
+        已提交 {{ submitSummary.count }} 条奖励认定，后端拟认定总金额：{{ money(submitSummary.total) }}。记录已同步到人事档案。
       </n-alert>
     </n-card>
 
@@ -68,7 +64,7 @@
             <div>
               <strong>{{ label(categoryMap, item.category) }}</strong>
               <span>{{ label(levelMap, item.level) }} / {{ label(rankMap, item.rank) }}</span>
-              <small>{{ requestText(item.calculation_detail?.request_data) }}</small>
+              <small>{{ requestText(item) }}</small>
             </div>
             <div class="reward-amount">
               <strong>{{ money(item.final_amount) }}</strong>
@@ -82,50 +78,78 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useMessage } from 'naive-ui'
 import { createMyRewardRecognition, getMyRewardRecognitions } from '@/api'
+import {
+  categoryMap,
+  levelMap,
+  money,
+  rankMap,
+  rewardContentLabel,
+  rewardRuleKey,
+  rewardRules2024,
+  type RewardRuleOption,
+} from '@/utils/teaching-reward-policy'
+
+type RewardApplyRow = {
+  id: number
+  category: string | null
+  ruleKey: string | null
+}
 
 const message = useMessage()
 const submitting = ref(false)
-const result = ref<any>(null)
+const submitSummary = ref<{ count: number; total: number } | null>(null)
 const recognitions = ref<any[]>([])
-const form = reactive<any>({
-  category: 'teaching_competition',
-  level: 'national',
-  rank: 'first_prize',
-  competition_scope: 'individual',
-  participation_type: 'self',
-  project_stage: null,
-  project_type: '',
-  word_count: 0,
-})
+let nextRowId = 1
 
-const categoryMap: Record<string, string> = {
-  teaching_achievement: '教学成果类',
-  major_construction: '专业建设类',
-  course_construction: '课程建设类',
-  textbook_construction: '教材建设类',
-  practice_teaching: '实践教学类',
-  teaching_competition: '教学竞赛类',
-  teaching_team: '教师队伍类',
-  teaching_reform: '教学改革项目奖',
-  teaching_quality: '教学质量奖',
-  lecture_competition: '讲课比赛奖',
-  ideological_political: '思政专项奖',
+const rows = reactive<RewardApplyRow[]>([createRow()])
+
+const categoryOptions = Object.entries(categoryMap).map(([value, label]) => ({
+  label,
+  value,
+}))
+
+const selectedRules = computed(() => rows.map(rowRule).filter(Boolean) as RewardRuleOption[])
+const totalAmount = computed(() => selectedRules.value.reduce((sum, rule) => sum + rule.amount, 0))
+
+function createRow(): RewardApplyRow {
+  return { id: nextRowId++, category: null, ruleKey: null }
 }
-const levelMap: Record<string, string> = { national: '国家级', provincial: '省部级', municipal: '市厅级', school: '校级' }
-const rankMap: Record<string, string> = { grand_prize: '特等奖', first_prize: '一等奖', second_prize: '二等奖', third_prize: '三等奖' }
 
-const categoryOptions = Object.entries(categoryMap).map(([value, label]) => ({ label, value }))
-const levelOptions = Object.entries(levelMap).map(([value, label]) => ({ label, value }))
-const rankOptions = Object.entries(rankMap).map(([value, label]) => ({ label, value }))
-const scopeOptions = [{ label: '单项', value: 'individual' }, { label: '团体', value: 'group' }]
-const participationOptions = [{ label: '本人参赛', value: 'self' }, { label: '指导学生', value: 'guided_student' }]
-const stageOptions = [{ label: '立项阶段', value: 'established' }, { label: '结题阶段', value: 'completed' }]
+function addRow() {
+  rows.push(createRow())
+}
 
-function money(value: number) {
-  return `${Number(value || 0).toLocaleString('zh-CN')} 元`
+function removeRow(index: number) {
+  rows.splice(index, 1)
+  submitSummary.value = null
+}
+
+function handleCategoryChange(row: RewardApplyRow) {
+  row.ruleKey = null
+  submitSummary.value = null
+}
+
+function contentOptions(row: RewardApplyRow) {
+  if (!row.category) return []
+  return rewardRules2024
+    .filter(rule => rule.category === row.category)
+    .map(rule => ({
+      label: rewardContentLabel(rule),
+      value: rewardRuleKey(rule),
+    }))
+}
+
+function rowRule(row: RewardApplyRow) {
+  if (!row.category || !row.ruleKey) return null
+  return rewardRules2024.find(rule => rule.category === row.category && rewardRuleKey(rule) === row.ruleKey) || null
+}
+
+function rowAmountText(row: RewardApplyRow) {
+  const rule = rowRule(row)
+  return rule ? money(rule.amount) : ''
 }
 
 function label(map: Record<string, string>, value: string) {
@@ -137,43 +161,93 @@ function statusText(status: string) {
   return map[status] || status || '-'
 }
 
-function requestText(data: any) {
-  if (!data) return ''
-  return [
-    data.participation_type === 'guided_student' ? '指导学生' : data.participation_type === 'self' ? '本人参赛' : '',
-    data.competition_scope === 'group' ? '团体' : data.competition_scope === 'individual' ? '单项' : '',
+function requestText(item: any) {
+  const data = item?.calculation_detail?.request_data || {}
+  const rule = recognitionRule(item)
+  const extras = [
     data.project_stage === 'established' ? '立项阶段' : data.project_stage === 'completed' ? '结题阶段' : '',
-    data.project_type ? `项目类型：${data.project_type}` : '',
-  ].filter(Boolean).join(' · ')
+  ].filter(Boolean)
+  return [rule ? rewardContentLabel(rule) : '', ...extras].filter(Boolean).join(' · ')
 }
 
-function applyRecognitionToForm(item: any) {
-  const data = item?.calculation_detail?.request_data
-  if (!data) return
-  Object.assign(form, {
-    category: data.category || item.category || form.category,
-    level: data.level || item.level || form.level,
-    rank: data.rank || item.rank || form.rank,
-    competition_scope: data.competition_scope || form.competition_scope,
-    participation_type: data.participation_type || form.participation_type,
-    project_stage: data.project_stage || null,
-    project_type: data.project_type || '',
-    word_count: Number(data.word_count || 0),
-  })
+function recognitionRule(item: any) {
+  const data = item?.calculation_detail?.request_data || {}
+  const category = data.category || item.category
+  const subcategory = category === 'teaching_competition'
+    ? data.competition_scope
+    : category === 'teaching_reform'
+      ? data.project_type
+      : data.subcategory
+  return rewardRules2024.find(rule => {
+    if (rule.category !== category) return false
+    if ((rule.subcategory || null) !== (subcategory || null)) return false
+    if ((rule.level || null) !== (data.level || item.level || null)) return false
+    if ((rule.rank || null) !== (data.rank || item.rank || null)) return false
+    return true
+  }) || null
+}
+
+function payloadFromRule(rule: RewardRuleOption) {
+  const payload: Record<string, any> = {
+    category: rule.category,
+    subcategory: rule.subcategory,
+    level: rule.level,
+    rank: rule.rank,
+  }
+
+  if (rule.category === 'teaching_competition') {
+    payload.competition_scope = rule.subcategory
+    payload.participation_type = 'self'
+  }
+
+  if (rule.category === 'teaching_reform') {
+    payload.project_type = rule.rank
+  }
+
+  if (rule.category === 'textbook_construction' && rule.subcategory?.includes('20万字以上')) {
+    payload.word_count = 200000
+  }
+
+  if (rule.category === 'textbook_construction' && rule.subcategory?.includes('20万字以下')) {
+    payload.word_count = 1
+  }
+
+  return payload
 }
 
 async function loadExisting() {
   recognitions.value = await getMyRewardRecognitions()
-  if (recognitions.value.length > 0) {
-    applyRecognitionToForm(recognitions.value[0])
-  }
 }
 
 async function submit() {
+  const hasTouchedIncomplete = rows.some(row => (row.category || row.ruleKey) && !rowRule(row))
+  const completeRows = rows.filter(row => rowRule(row))
+
+  if (hasTouchedIncomplete) {
+    message.warning('请把已开始填写的奖励内容选择完整后再提交')
+    return
+  }
+
+  if (completeRows.length === 0) {
+    message.warning('请至少选择一条奖励内容')
+    return
+  }
+
   submitting.value = true
   try {
-    result.value = await createMyRewardRecognition(form)
+    const submitted = []
+    for (const row of completeRows) {
+      const rule = rowRule(row)
+      if (rule) {
+        submitted.push(await createMyRewardRecognition(payloadFromRule(rule)))
+      }
+    }
+    submitSummary.value = {
+      count: submitted.length,
+      total: submitted.reduce((sum, item) => sum + Number(item?.final_amount || 0), 0),
+    }
     message.success('奖励认定已提交，并同步到人事档案')
+    rows.splice(0, rows.length, createRow())
     await loadExisting()
   } finally {
     submitting.value = false
@@ -186,8 +260,32 @@ onMounted(loadExisting)
 <style scoped>
 .hr-page { padding: 20px; }
 .section-gap { margin-top: 16px; }
+.apply-table { display: grid; gap: 10px; }
+.apply-head,
+.apply-line {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) minmax(320px, 1.4fr) minmax(150px, 0.7fr) 80px;
+  gap: 12px;
+  align-items: center;
+}
+.apply-head {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 2px;
+}
 .reward-row { display: flex; justify-content: space-between; gap: 16px; width: 100%; align-items: center; }
 .reward-row span, .reward-row small { display: block; color: #64748b; margin-top: 4px; }
 .reward-amount { text-align: right; min-width: 120px; }
 .reward-amount strong { color: #0f766e; }
+
+@media (max-width: 900px) {
+  .apply-head { display: none; }
+  .apply-line {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+}
 </style>

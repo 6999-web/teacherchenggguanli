@@ -43,12 +43,6 @@ export const studentRoutes: Array<RouteRecordRaw> = [
         meta: { title: 'AI 智能对话' },
       },
       {
-        path: 'profile',
-        name: 'studentProfile',
-        component: () => import('../components/student/profile/ProfilePage.vue'),
-        meta: { title: '个人资料' },
-      },
-      {
         path: 'hr-profile',
         name: 'hrProfile',
         component: () => import('../components/student/hr/HrProfile.vue'),

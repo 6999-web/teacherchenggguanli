@@ -9,7 +9,7 @@
         </div>
         <div>
           <h1>教师综合管理平台</h1>
-          <p>评价体系、工作奖励体系、教师人事管理体系统一入口</p>
+          <p>评价体系、教师人事管理体系统一入口</p>
         </div>
       </div>
 
@@ -27,9 +27,9 @@
           <span class="card-icon">
             <IconAward :size="34" />
           </span>
-          <span class="card-title">工作奖励体系</span>
+          <span class="card-title">人事奖励申报</span>
           <span class="card-desc">教学成果申报、奖励规则匹配、奖励认定审核、年度批次发放。</span>
-          <span class="card-action">进入奖励体系</span>
+          <span class="card-action">进入人事奖励</span>
         </button>
 
         <button class="system-card hr-card" type="button" @click="goToHr">

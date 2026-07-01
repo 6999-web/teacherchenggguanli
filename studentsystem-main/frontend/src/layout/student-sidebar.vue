@@ -78,7 +78,6 @@ import {
   IconChartBar,
   IconFileText,
   IconLogout,
-  IconMessageCircle,
   IconSchool,
   IconUser,
 } from '../utils/icons'
@@ -94,7 +93,7 @@ const activeMenu = ref('achievement')
 const loading = ref(false)
 const systemTitle = computed(() => {
   if (route.path.startsWith('/student/hr')) return '教师人事管理体系'
-  if (route.path.startsWith('/student/teaching-reward')) return '工作奖励体系'
+  if (route.path.startsWith('/student/teaching-reward')) return '教师人事管理体系'
   return '教师成果管理平台'
 })
 
@@ -117,13 +116,9 @@ const menu_items = ref([
   { label: '历年绩效', key: 'hr_performance', icon: () => h(IconChartBar) },
   { label: '职称自查', key: 'hr_title', icon: () => h(IconAward) },
   { label: 'AI智能分析', key: 'portrait_analysis', icon: () => h(IconChartBar) },
-  { label: 'AI学习助手', key: 'portrait_chat', icon: () => h(IconMessageCircle) },
-  { label: '个人资料', key: 'profile', icon: () => h(IconUser) },
 ])
 
 const user_options = ref([
-  { label: '个人资料', key: 'profile', icon: () => h(IconUser) },
-  { type: 'divider' },
   { label: '退出登录', key: 'logout', icon: () => h(IconLogout) },
 ])
 
@@ -160,8 +155,6 @@ const pathToMenu: Record<string, string> = {
   '/student/hr-performance': 'hr_performance',
   '/student/hr-title': 'hr_title',
   '/student/portrait': 'portrait_analysis',
-  '/student/portrait/ai-chat': 'portrait_chat',
-  '/student/profile': 'profile',
 }
 
 const menuToPath: Record<string, string> = {
@@ -172,8 +165,6 @@ const menuToPath: Record<string, string> = {
   hr_performance: '/student/hr-performance',
   hr_title: '/student/hr-title',
   portrait_analysis: '/student/portrait',
-  portrait_chat: '/student/portrait/ai-chat',
-  profile: '/student/profile',
 }
 
 function updateActiveMenu() {
@@ -189,7 +180,6 @@ function handleMenuClick(key: string) {
 
 function handleUserSelect(key: string) {
   if (key === 'logout') handleLogout()
-  if (key === 'profile') router.push('/student/profile')
 }
 
 function handleLogout() {

@@ -7,7 +7,7 @@
         </div>
       </template>
       <div class="welcome-content">
-        <p>您已成功登录工作奖励体系管理端。</p>
+        <p>您已成功登录教师人事管理体系管理端。</p>
         <p>请从左侧菜单选择功能进行操作。</p>
       </div>
     </el-card>

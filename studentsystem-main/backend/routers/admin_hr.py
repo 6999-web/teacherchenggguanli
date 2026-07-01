@@ -26,6 +26,7 @@ from models import (
 from routers.hr import (
     apply_profile_change,
     attachment_to_dict,
+    build_title_gap,
     change_request_to_dict,
     performance_to_dict,
     profile_to_dict,
@@ -76,12 +77,22 @@ async def get_teacher_detail(
     attachments = db.query(HrTeacherAttachment).filter(HrTeacherAttachment.profile_id == profile_id).all()
     performances = db.query(HrPerformanceRecord).filter(HrPerformanceRecord.profile_id == profile_id).all()
     events = db.query(HrCareerEvent).filter(HrCareerEvent.profile_id == profile_id).order_by(HrCareerEvent.event_date.desc()).all()
+    approved_count = (
+        db.query(BizAchievement)
+        .filter(
+            BizAchievement.student_id == profile.student_id,
+            BizAchievement.status == AchievementStatus.APPROVED,
+            BizAchievement.is_deleted == False,
+        )
+        .count()
+    )
     return success_response(
         data={
             "profile": profile_to_dict(profile),
             "attachments": [attachment_to_dict(row) for row in attachments],
             "performances": [performance_to_dict(row) for row in performances],
             "career_events": [career_event_to_dict(row) for row in events],
+            "title_gap": build_title_gap(db, profile, approved_count),
         }
     )
 
@@ -96,7 +107,62 @@ async def list_change_requests(
     if status:
         query = query.filter(HrProfileChangeRequest.status == status)
     rows = query.order_by(HrProfileChangeRequest.created_at.desc()).all()
-    return success_response(data=[change_request_to_dict(row) for row in rows])
+    data = []
+    for row in rows:
+        item = change_request_to_dict(row)
+        profile = db.query(HrTeacherProfile).filter(HrTeacherProfile.id == row.profile_id).first()
+        if profile:
+            item.update(
+                {
+                    "teacher_name": profile.name,
+                    "employee_no": profile.employee_no,
+                    "department": profile.department,
+                }
+            )
+        data.append(item)
+    return success_response(data=data)
+
+
+@router.get("/performance")
+async def list_performance(
+    profile_id: Optional[int] = Query(None),
+    year: Optional[int] = Query(None),
+    status: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    admin: SysUser = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    query = db.query(HrPerformanceRecord, HrTeacherProfile).join(
+        HrTeacherProfile,
+        HrPerformanceRecord.profile_id == HrTeacherProfile.id,
+    )
+    if profile_id:
+        query = query.filter(HrPerformanceRecord.profile_id == profile_id)
+    if year:
+        query = query.filter(HrPerformanceRecord.year == year)
+    if status:
+        query = query.filter(HrPerformanceRecord.status == status)
+    total = query.count()
+    rows = (
+        query.order_by(HrPerformanceRecord.year.desc(), HrPerformanceRecord.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    data = []
+    for record, profile in rows:
+        item = performance_to_dict(record)
+        item.update(
+            {
+                "profile_id": record.profile_id,
+                "teacher_name": profile.name,
+                "employee_no": profile.employee_no,
+                "department": profile.department,
+            }
+        )
+        data.append(item)
+    return success_response(data={"list": data, "total": total})
 
 
 @router.patch("/change-requests/{request_id}/audit")
@@ -130,7 +196,16 @@ async def create_performance(
     admin: SysUser = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    profile_id = int(payload.get("profile_id"))
+    try:
+        profile_id = int(payload.get("profile_id") or 0)
+    except (TypeError, ValueError):
+        return error_response(msg="请选择有效教师档案", code=400)
+    if profile_id <= 0:
+        return error_response(msg="请选择有效教师档案", code=400)
+    profile = db.query(HrTeacherProfile).filter(HrTeacherProfile.id == profile_id).first()
+    if not profile:
+        return error_response(msg="教师档案不存在，请先选择有效档案", code=404)
+
     final_score = float(payload.get("final_score") or 0)
     if not final_score:
         final_score = (

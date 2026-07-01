@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>教师人事管理体系</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif;
+        background: #333f89;
+        color: #1f2937;
+      }
+      .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        padding: 32px 20px;
+      }
+      .login-content {
+        width: 100%;
+        max-width: 1040px;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 56px;
+      }
+      .logo-wrapper {
+        width: 110px;
+        height: 110px;
+        border-radius: 20px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        padding: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+      .logo {
+        width: 90px;
+        height: 90px;
+        object-fit: contain;
+      }
+      .title {
+        margin: 0 0 12px;
+        color: #fff;
+        font-size: 44px;
+        font-weight: 700;
+        letter-spacing: 2px;
+      }
+      .subtitle {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 17px;
+        letter-spacing: 1px;
+      }
+      .portal-cards {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 42px;
+        margin-bottom: 36px;
+      }
+      .portal-card {
+        min-height: 280px;
+        border-radius: 32px;
+        background: #fff;
+        color: inherit;
+        text-decoration: none;
+        padding: 40px 34px;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .portal-card:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.38);
+      }
+      .card-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        margin-bottom: 24px;
+        background: #1e2a4a;
+      }
+      .card-icon.admin {
+        background: #151e33;
+      }
+      .card-title {
+        margin: 0 0 10px;
+        color: #1a1a1a;
+        font-size: 27px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+      .card-desc {
+        margin: 0 0 22px;
+        color: #666;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      .card-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: auto;
+      }
+      .feature-tag {
+        border-radius: 20px;
+        background: #eef2f7;
+        color: #5c6b8a;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 7px 14px;
+      }
+      .card-arrow {
+        position: absolute;
+        right: 30px;
+        bottom: 28px;
+        color: #8c98ac;
+        font-size: 30px;
+      }
+      .back-link {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 20;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        color: rgba(255, 255, 255, 0.82);
+      }
+      @media (max-width: 900px) {
+        .portal-cards { grid-template-columns: 1fr; gap: 28px; }
+        .title { font-size: 34px; }
+      }
+      @media (max-width: 560px) {
+        .login-container { padding: 26px 16px; }
+        .header { margin-bottom: 34px; }
+        .logo-wrapper { width: 86px; height: 86px; border-radius: 18px; }
+        .logo { width: 70px; height: 70px; }
+        .title { font-size: 28px; }
+        .portal-card { min-height: 240px; padding: 30px 24px; border-radius: 24px; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="back-link" href="http://localhost:5001/">← 返回首页</a>
+    <main class="login-container">
+      <div class="login-content">
+        <header class="header">
+          <div class="logo-wrapper">
+            <img class="logo" src="school-logo.jpg" alt="校徽" />
+          </div>
+          <h1 class="title">教师人事管理体系</h1>
+          <p class="subtitle">请选择登录入口</p>
+        </header>
+
+        <section class="portal-cards" aria-label="教师人事管理体系登录入口">
+          <a class="portal-card" href="http://localhost:5004/student/login?redirect=/student/hr-profile">
+            <span class="card-icon" aria-hidden="true">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.8" />
+                <path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </span>
+            <h2 class="card-title">教师端登录</h2>
+            <p class="card-desc">查看个人档案、人事附件、历年绩效和职称自查。</p>
+            <span class="card-features">
+              <span class="feature-tag">个人档案</span>
+              <span class="feature-tag">职称自查</span>
+            </span>
+            <span class="card-arrow" aria-hidden="true">→</span>
+          </a>
+
+          <a class="portal-card" href="http://localhost:5005/admin/login">
+            <span class="card-icon admin" aria-hidden="true">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                <path d="M5 7h14M5 12h14M5 17h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2h11A2.5 2.5 0 0 1 20 4.5v15A2.5 2.5 0 0 1 17.5 22h-11A2.5 2.5 0 0 1 4 19.5v-15Z" stroke="currentColor" stroke-width="1.8" />
+              </svg>
+            </span>
+            <h2 class="card-title">管理端登录</h2>
+            <p class="card-desc">维护教师档案、管理绩效记录、配置职称规则和奖励认定。</p>
+            <span class="card-features">
+              <span class="feature-tag">档案管理</span>
+              <span class="feature-tag">绩效管理</span>
+            </span>
+            <span class="card-arrow" aria-hidden="true">→</span>
+          </a>
+        </section>
+
+      </div>
+    </main>
+  </body>
+</html>

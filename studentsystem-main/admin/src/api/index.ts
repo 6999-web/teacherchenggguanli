@@ -46,6 +46,14 @@ export function createHrPerformance(data: any): Promise<any> {
     return request.post('/api/v1/admin/hr/performance', data)
 }
 
+export function getHrPerformanceRecords(params?: any): Promise<any> {
+    return request.get('/api/v1/admin/hr/performance', { params })
+}
+
+export function updateHrPerformance(recordId: number, data: any): Promise<any> {
+    return request.patch(`/api/v1/admin/hr/performance/${recordId}`, data)
+}
+
 export function createHrTitleRule(data: any): Promise<any> {
     return request.post('/api/v1/admin/hr/title-rules', data)
 }
@@ -153,6 +161,8 @@ export default {
     getHrChangeRequests,
     auditHrChangeRequest,
     createHrPerformance,
+    getHrPerformanceRecords,
+    updateHrPerformance,
     createHrTitleRule,
     getHrTitleRules,
     getRewardRecognitions,

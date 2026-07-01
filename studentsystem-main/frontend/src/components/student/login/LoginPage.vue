@@ -4,7 +4,7 @@
       <n-icon size="20" class="back-icon">
         <IconArrowLeft :size="20" />
       </n-icon>
-      <span>返回入口</span>
+      <span>返回首页</span>
     </div>
 
     <div class="login-container">
@@ -235,7 +235,9 @@ const handleChangePwd = () => {
   })
 }
 
-const goToHome = () => router.push('/')
+const goToHome = () => {
+  window.location.href = 'http://localhost:5001/'
+}
 
 function loginRedirectPath() {
   const redirect = route.query.redirect
@@ -247,7 +249,7 @@ function loginRedirectPath() {
 
 function getSystemTitle(path: string) {
   if (path.startsWith('/student/hr')) return '教师人事管理体系'
-  if (path.startsWith('/student/teaching-reward')) return '工作奖励体系'
+  if (path.startsWith('/student/teaching-reward')) return '教师人事管理体系'
   return '教师成果管理平台'
 }
 

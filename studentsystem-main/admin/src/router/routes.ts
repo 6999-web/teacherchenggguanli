@@ -28,7 +28,7 @@ export const adminRoutes: Array<RouteRecordRaw> = [
         path: 'hr/change-requests',
         name: 'adminHrChangeRequests',
         component: () => import('../components/admin/hr/HrChangeRequests.vue'),
-        meta: { title: '资料变更审核' },
+        meta: { title: '档案变更审核' },
       },
       {
         path: 'hr/performance',
@@ -53,12 +53,6 @@ export const adminRoutes: Array<RouteRecordRaw> = [
         name: 'adminRewardRecognition',
         component: () => import('../components/admin/hr/RewardRecognition.vue'),
         meta: { title: '教学奖励认定' },
-      },
-      {
-        path: 'reward/batches',
-        name: 'adminRewardBatches',
-        component: () => import('../components/admin/hr/RewardBatches.vue'),
-        meta: { title: '奖励批次汇总' },
       },
     ],
   },

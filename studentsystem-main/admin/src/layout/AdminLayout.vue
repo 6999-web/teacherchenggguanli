@@ -3,7 +3,7 @@
     <el-container>
       <el-header class="admin-header">
         <div class="header-left">
-          <h2 class="logo">工作奖励体系 - 管理端</h2>
+          <h2 class="logo">教师人事管理体系 - 管理端</h2>
         </div>
         <div class="header-right">
           <el-dropdown @command="handleCommand">

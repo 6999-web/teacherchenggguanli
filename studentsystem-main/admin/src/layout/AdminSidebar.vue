@@ -21,8 +21,8 @@
         <span>教师档案</span>
       </el-menu-item>
       <el-menu-item index="/admin/hr/change-requests">
-        <el-icon><Edit /></el-icon>
-        <span>资料变更审核</span>
+        <el-icon><EditPen /></el-icon>
+        <span>档案审核</span>
       </el-menu-item>
       <el-menu-item index="/admin/hr/performance">
         <el-icon><TrendCharts /></el-icon>
@@ -40,10 +40,6 @@
         <el-icon><Medal /></el-icon>
         <span>奖励认定</span>
       </el-menu-item>
-      <el-menu-item index="/admin/reward/batches">
-        <el-icon><Tickets /></el-icon>
-        <span>奖励批次</span>
-      </el-menu-item>
     </el-menu>
   </el-aside>
 </template>
@@ -51,7 +47,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { DataLine, Edit, List, Medal, Setting, Tickets, TrendCharts, User } from '@element-plus/icons-vue'
+import { DataLine, EditPen, List, Medal, Setting, TrendCharts, User } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const activeMenu = computed(() => route.path)

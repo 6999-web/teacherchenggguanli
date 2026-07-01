@@ -1,7 +1,12 @@
 <template>
   <div class="admin-page">
     <el-card shadow="never">
-      <template #header>职称规则配置</template>
+      <template #header>
+        <div class="card-header">
+          <span>职称规则配置</span>
+          <el-button type="primary" @click="loadRows">刷新</el-button>
+        </div>
+      </template>
       <el-form :model="form" label-width="150px">
         <el-row :gutter="16">
           <el-col :span="8"><el-form-item label="目标职称"><el-input v-model="form.target_title" /></el-form-item></el-col>
@@ -19,6 +24,9 @@
         <el-table-column prop="min_approved_achievements" label="成果数" />
         <el-table-column prop="required_performance_grade" label="绩效等级" />
         <el-table-column prop="min_years_in_current_title" label="任职年限" />
+        <el-table-column label="必需附件" min-width="180">
+          <template #default="{ row }">{{ (row.required_attachment_types || []).join('、') || '无' }}</template>
+        </el-table-column>
       </el-table>
     </el-card>
   </div>
@@ -48,4 +56,5 @@ onMounted(loadRows)
 
 <style scoped>
 .admin-page { padding: 20px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; }
 </style>

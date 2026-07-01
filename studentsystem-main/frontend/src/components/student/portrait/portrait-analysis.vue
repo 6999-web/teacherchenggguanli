@@ -1,6 +1,32 @@
 <template>
   <div class="portrait-analysis">
     <div class="top-dashboard">
+      <n-card class="hr-summary-card" hoverable>
+        <template #header>
+          <div class="card-header">
+            <span class="header-title">人事业务概览</span>
+          </div>
+        </template>
+        <div class="hr-summary-grid">
+          <div class="hr-summary-item">
+            <span>当前职称</span>
+            <strong>{{ hrProfile.current_title || '未设置' }}</strong>
+          </div>
+          <div class="hr-summary-item">
+            <span>最新绩效</span>
+            <strong>{{ performanceText }}</strong>
+          </div>
+          <div class="hr-summary-item">
+            <span>奖励认定</span>
+            <strong>{{ money(hrRewardSummary.approved_total_amount || hrRewardSummary.total_amount || 0) }}</strong>
+          </div>
+          <div class="hr-summary-item">
+            <span>职称缺口</span>
+            <strong>{{ hrTitleGap?.eligible ? '已达标' : '待完善' }}</strong>
+          </div>
+        </div>
+      </n-card>
+
       <!-- 个人信息卡片 -->
       <n-card class="personal-info-card" hoverable>
         <template #header>
@@ -178,8 +204,10 @@ import {
   generateStudentPersona,
   getStudentMe as fetchStudentMe,
   getMyAchievements as fetchAchievements,
-  getStudentProfile as fetchStudentProfile
+  getStudentProfile as fetchStudentProfile,
+  getHrDashboard
 } from '@/api'
+import { money } from '@/utils/teaching-reward-policy'
 
 const message = useMessage()
 
@@ -204,6 +232,11 @@ const student_avatar = computed(() => {
 const student_name = computed(() => profileData.value.basic_info?.name || profileData.value.basic_info?.username || '教师')
 const student_major = computed(() => profileData.value.basic_info?.major || '未设置')
 const student_number = computed(() => profileData.value.basic_info?.student_id || '未设置')
+const hrProfile = ref<any>({})
+const hrRewardSummary = ref<any>({})
+const hrPerformance = ref<any>(null)
+const hrTitleGap = ref<any>(null)
+const performanceText = computed(() => hrPerformance.value ? `${hrPerformance.value.final_score} / ${hrPerformance.value.grade || '-'}` : '暂无')
 
 // Achievement data
 const achievementData = ref({
@@ -261,6 +294,18 @@ const loadPersona = async () => {
     }
   } catch (e) {
     console.error('加载画像失败:', e)
+  }
+}
+
+const loadHrDashboard = async () => {
+  try {
+    const resp = await getHrDashboard() as any
+    hrProfile.value = resp?.profile || {}
+    hrRewardSummary.value = resp?.reward_recognition_summary || {}
+    hrPerformance.value = resp?.current_performance || null
+    hrTitleGap.value = resp?.title_gap || null
+  } catch (e) {
+    console.error('加载人事业务概览失败:', e)
   }
 }
 
@@ -360,7 +405,7 @@ import { onUnmounted } from 'vue'
 onMounted(async () => {
   window.addEventListener('avatar-updated', handleGlobalAvatarUpdate)
   await initializeUser()
-  await Promise.all([fetchAchievementCounts(), loadPersona()])
+  await Promise.all([fetchAchievementCounts(), loadPersona(), loadHrDashboard()])
 })
 
 onUnmounted(() => {
@@ -391,23 +436,53 @@ onUnmounted(() => {
 .top-dashboard {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
+  grid-template-rows: auto auto auto;
   gap: 20px;
+}
+
+.hr-summary-card {
+  grid-column: 1 / 3;
+  grid-row: 1;
 }
 
 .personal-info-card {
   grid-column: 1;
-  grid-row: 1;
+  grid-row: 2;
 }
 
 .persona-card {
   grid-column: 2;
-  grid-row: 1 / 3;
+  grid-row: 2 / 4;
 }
 
 .comprehensive-evaluation-card {
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 3;
+}
+
+.hr-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.hr-summary-item {
+  background: #f8f9fc;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.hr-summary-item span {
+  display: block;
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.hr-summary-item strong {
+  color: #1a3a8a;
+  font-size: 18px;
 }
 
 /* ===== Personal Info ===== */
@@ -669,6 +744,10 @@ onUnmounted(() => {
   .top-dashboard {
     grid-template-columns: 1fr;
   }
+  .hr-summary-card {
+    grid-column: 1;
+    grid-row: auto;
+  }
   .persona-card {
     grid-column: 1;
     grid-row: auto;
@@ -692,6 +771,9 @@ onUnmounted(() => {
   }
   .persona-details {
     flex-direction: column;
+  }
+  .hr-summary-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

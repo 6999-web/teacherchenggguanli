@@ -124,6 +124,9 @@ def calculate_structured_reward(
         if configured_rule.get("staged") and data.get("project_stage") in {"established", "completed"}:
             final_amount = int(base_amount * 0.5)
             adjustments.append({"type": "stage", "value": 0.5, "reason": "configured staged rule pays 50%"})
+        if category == "teaching_competition" and data.get("participation_type") == "guided_student":
+            final_amount = int((final_amount or 0) * 0.5)
+            adjustments.append({"type": "ratio", "value": 0.5, "reason": "guided student competition"})
         annual_cap = configured_rule.get("annual_cap")
         if annual_cap:
             prior_total = int(data.get("teacher_year_guided_total") or 0)

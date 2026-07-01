@@ -7,23 +7,22 @@
           <el-button type="primary" @click="loadRows">刷新</el-button>
         </div>
       </template>
-      <el-form :model="form" label-width="110px">
-        <el-row :gutter="16">
-          <el-col :span="6"><el-form-item label="档案ID"><el-input-number v-model="form.profile_id" :min="1" /></el-form-item></el-col>
-          <el-col :span="6"><el-form-item label="类别"><el-select v-model="form.category"><el-option label="教学竞赛" value="teaching_competition" /><el-option label="教学成果" value="teaching_achievement" /><el-option label="教改项目" value="teaching_reform" /><el-option label="教材建设" value="textbook_construction" /></el-select></el-form-item></el-col>
-          <el-col :span="6"><el-form-item label="级别"><el-select v-model="form.level"><el-option label="国家级" value="national" /><el-option label="省部级" value="provincial" /><el-option label="市厅级" value="municipal" /><el-option label="校级" value="school" /></el-select></el-form-item></el-col>
-          <el-col :span="6"><el-form-item label="等级"><el-select v-model="form.rank"><el-option label="特等奖" value="grand_prize" /><el-option label="一等奖" value="first_prize" /><el-option label="二等奖" value="second_prize" /><el-option label="三等奖" value="third_prize" /></el-select></el-form-item></el-col>
-        </el-row>
-        <el-button type="primary" @click="create">创建认定</el-button>
-      </el-form>
       <el-table :data="rows" border stripe style="margin-top: 18px">
-        <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column prop="profile_id" label="档案ID" width="90" />
-        <el-table-column prop="category" label="类别" />
-        <el-table-column prop="base_amount" label="基础金额" />
-        <el-table-column prop="final_amount" label="拟定金额" />
-        <el-table-column prop="status" label="状态" />
-        <el-table-column label="操作" width="180">
+        <el-table-column label="奖励类别" min-width="150">
+          <template #default="{ row }">{{ rewardCategory(row) }}</template>
+        </el-table-column>
+        <el-table-column label="奖励内容" min-width="260">
+          <template #default="{ row }">{{ rewardContent(row) }}</template>
+        </el-table-column>
+        <el-table-column label="奖励金额" width="140">
+          <template #default="{ row }">{{ money(row.final_amount) }}</template>
+        </el-table-column>
+        <el-table-column label="是否批准" width="120">
+          <template #default="{ row }">
+            <el-tag :type="statusTag(row.status)">{{ statusText(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="170">
           <template #default="{ row }">
             <el-button size="small" type="success" :disabled="row.status !== 'pending'" @click="audit(row, 'approve')">通过</el-button>
             <el-button size="small" type="danger" :disabled="row.status !== 'pending'" @click="audit(row, 'reject')">驳回</el-button>
@@ -35,21 +34,58 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { auditRewardRecognition, createRewardRecognition, getRewardRecognitions } from '@/api'
+import { auditRewardRecognition, getRewardRecognitions } from '@/api'
+import {
+  categoryMap,
+  money,
+  rewardContentLabel,
+  rewardRules2024,
+  type RewardRuleOption,
+} from '../../../../../frontend/src/utils/teaching-reward-policy'
 
 const rows = ref<any[]>([])
-const form = reactive<any>({ profile_id: 1, category: 'teaching_competition', level: 'national', rank: 'first_prize' })
 
 async function loadRows() {
   rows.value = await getRewardRecognitions()
 }
 
-async function create() {
-  await createRewardRecognition(form)
-  ElMessage.success('奖励认定已创建')
-  loadRows()
+function matchingRule(row: any): RewardRuleOption | null {
+  const data = row?.calculation_detail?.request_data || {}
+  const category = data.category || row.category
+  const subcategory = category === 'teaching_competition'
+    ? data.competition_scope
+    : category === 'teaching_reform'
+      ? data.project_type
+      : data.subcategory
+  return rewardRules2024.find(rule => {
+    if (rule.category !== category) return false
+    if ((rule.subcategory || null) !== (subcategory || null)) return false
+    if ((rule.level || null) !== (data.level || row.level || null)) return false
+    if ((rule.rank || null) !== (data.rank || row.rank || null)) return false
+    return true
+  }) || null
+}
+
+function rewardCategory(row: any) {
+  return categoryMap[row.category] || row.category || '-'
+}
+
+function rewardContent(row: any) {
+  const rule = matchingRule(row)
+  if (rule) return rewardContentLabel(rule)
+  return row?.calculation_detail?.policy_basis || '-'
+}
+
+function statusText(status: string) {
+  const map: Record<string, string> = { pending: '待审核', approved: '已批准', rejected: '已驳回' }
+  return map[status] || status || '-'
+}
+
+function statusTag(status: string) {
+  const map: Record<string, string> = { pending: 'warning', approved: 'success', rejected: 'danger' }
+  return map[status] || 'info'
 }
 
 async function audit(row: any, action: string) {

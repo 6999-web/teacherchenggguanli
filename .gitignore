@@ -43,6 +43,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.superpowers/
 
 # Large reference documents
 *.pdf
