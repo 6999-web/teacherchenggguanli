@@ -164,7 +164,7 @@
     </style>
   </head>
   <body>
-    <a class="back-link" href="http://localhost:5001/">← 返回首页</a>
+    <a class="back-link" href="#" data-port="5001" data-path="/">← 返回首页</a>
     <main class="login-container">
       <div class="login-content">
         <header class="header">
@@ -176,7 +176,7 @@
         </header>
 
         <section class="portal-cards" aria-label="教师人事管理体系登录入口">
-          <a class="portal-card" href="http://localhost:5004/student/login?redirect=/student/hr-profile">
+          <a class="portal-card" href="#" data-port="5004" data-path="/student/login?redirect=/student/hr-profile">
             <span class="card-icon" aria-hidden="true">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
                 <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.8" />
@@ -192,7 +192,7 @@
             <span class="card-arrow" aria-hidden="true">→</span>
           </a>
 
-          <a class="portal-card" href="http://localhost:5005/admin/login">
+          <a class="portal-card" href="#" data-port="5005" data-path="/admin/login">
             <span class="card-icon admin" aria-hidden="true">
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
                 <path d="M5 7h14M5 12h14M5 17h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -211,5 +211,12 @@
 
       </div>
     </main>
+    <script>
+      document.querySelectorAll('[data-port]').forEach((link) => {
+        const port = link.dataset.port;
+        const path = link.dataset.path || '/';
+        link.href = `${window.location.protocol}//${window.location.hostname}:${port}${path}`;
+      });
+    </script>
   </body>
 </html>

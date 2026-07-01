@@ -236,7 +236,7 @@ const handleChangePwd = () => {
 }
 
 const goToHome = () => {
-  window.location.href = 'http://localhost:5001/'
+  window.location.href = `${window.location.protocol}//${window.location.hostname}:5001/`
 }
 
 function loginRedirectPath() {

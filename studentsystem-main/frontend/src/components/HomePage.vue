@@ -63,7 +63,7 @@ import {
 } from '@tabler/icons-vue'
 
 const router = useRouter()
-const adminLoginUrl = import.meta.env.VITE_ADMIN_LOGIN_URL || 'http://localhost:5005/admin/login'
+const adminLoginUrl = import.meta.env.VITE_ADMIN_LOGIN_URL || `${window.location.protocol}//${window.location.hostname}:5005/admin/login`
 
 const goToStudentLogin = () => {
   router.push('/student/login')

@@ -191,11 +191,11 @@ const handleLogin = async () => {
  * 切换到教师端登录
  */
 const goToStudentLogin = () => {
-  window.location.href = import.meta.env.VITE_STUDENT_LOGIN_URL || 'http://localhost:5004/student/login'
+  window.location.href = import.meta.env.VITE_STUDENT_LOGIN_URL || `${window.location.protocol}//${window.location.hostname}:5004/student/login`
 }
 
 const goToPortal = () => {
-  window.location.href = 'http://localhost:5001/'
+  window.location.href = `${window.location.protocol}//${window.location.hostname}:5001/`
 }
 </script>
 
