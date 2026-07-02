@@ -37,7 +37,6 @@ declare module 'vue' {
     TalentMarket: typeof import('./src/components/student/talent-market/talent-market.vue')['default']
     TeacherDetail: typeof import('./src/components/student/teachers/TeacherDetail.vue')['default']
     Teachers: typeof import('./src/components/student/teachers/teachers.vue')['default']
-    TeachingRewardApply: typeof import('./src/components/student/hr/TeachingRewardApply.vue')['default']
     VoteSurvey: typeof import('./src/components/student/vote-survey/vote-survey.vue')['default']
   }
 }

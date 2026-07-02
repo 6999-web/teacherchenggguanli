@@ -8,12 +8,59 @@ from schemas import AchievementListResponse, AchievementResponse, AchievementAud
 from utils import success_response, error_response
 from models import (
     BizAchievement, AchievementStatus, SysStudent,
-    SysTeacher, SysUser
+    SysTeacher, SysUser, HrProfileChangeRequest, RewardRecognition
 )
 from dependencies import require_admin
 from services.teaching_reward_rules import calculate_teaching_reward
 
 router = APIRouter(prefix="/api/v1/admin", tags=["Admin"])
+
+
+@router.get("/dashboard/audit-summary")
+async def get_audit_summary(
+    admin: SysUser = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Aggregate all teacher-submitted audit workloads for the admin dashboard."""
+    profile_change_module = _string_status_counts(
+        db,
+        HrProfileChangeRequest,
+        "profile_changes",
+        "教师档案变更审核",
+        "/admin/hr/change-requests",
+    )
+    reward_module = _string_status_counts(
+        db,
+        RewardRecognition,
+        "reward_recognitions",
+        "教学奖励认定审核",
+        "/admin/reward/recognitions",
+    )
+    modules = [profile_change_module, reward_module]
+    return success_response(
+        data={
+            "total": {
+                "submitted": sum(item["submitted"] for item in modules),
+                "pending": sum(item["pending"] for item in modules),
+                "approved": sum(item["approved"] for item in modules),
+                "rejected": sum(item["rejected"] for item in modules),
+            },
+            "modules": modules,
+        }
+    )
+
+
+def _string_status_counts(db: Session, model, key: str, title: str, route: str):
+    base = db.query(model)
+    return {
+        "key": key,
+        "title": title,
+        "pending": base.filter(model.status == "pending").count(),
+        "approved": base.filter(model.status == "approved").count(),
+        "rejected": base.filter(model.status == "rejected").count(),
+        "submitted": base.count(),
+        "route": route,
+    }
 
 
 @router.get("/achievements")

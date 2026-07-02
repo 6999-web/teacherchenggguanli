@@ -7,11 +7,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AchievementDetailDialog: typeof import('./src/components/admin/achievement/AchievementDetailDialog.vue')['default']
-    AchievementList: typeof import('./src/components/admin/achievement/AchievementList.vue')['default']
     AdminDashboard: typeof import('./src/components/admin/dashboard/AdminDashboard.vue')['default']
     AdminLogin: typeof import('./src/components/admin/login/AdminLogin.vue')['default']
-    AuditDialog: typeof import('./src/components/admin/achievement/AuditDialog.vue')['default']
     HrChangeRequests: typeof import('./src/components/admin/hr/HrChangeRequests.vue')['default']
     HrPerformance: typeof import('./src/components/admin/hr/HrPerformance.vue')['default']
     HrTeachers: typeof import('./src/components/admin/hr/HrTeachers.vue')['default']

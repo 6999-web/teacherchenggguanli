@@ -34,6 +34,13 @@ from routers.hr import (
     load_reward_rules,
 )
 from services.hr_reward_service import calculate_structured_reward
+from services.hr_fill_settings import fill_settings_to_dict, update_fill_setting
+from services.reward_policy_labels import (
+    POLICY_BASIS,
+    reward_content_text as build_reward_content_text,
+    request_subcategory,
+    reward_label_parts,
+)
 from services.reward_policy_seed import DEFAULT_COMPETITIONS, DEFAULT_REWARD_RULES, POLICY_VERSION
 from utils import error_response, success_response
 
@@ -121,6 +128,29 @@ async def list_change_requests(
             )
         data.append(item)
     return success_response(data=data)
+
+
+@router.get("/fill-settings")
+async def get_fill_settings(admin: SysUser = Depends(require_admin), db: Session = Depends(get_db)):
+    return success_response(data=fill_settings_to_dict(db))
+
+
+@router.patch("/fill-settings")
+async def patch_fill_settings(
+    payload: Dict[str, Any],
+    admin: SysUser = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    feature = payload.get("feature")
+    is_open = payload.get("is_open")
+    if not isinstance(is_open, bool):
+        return error_response(msg="is_open 必须为布尔值", code=400)
+    try:
+        data = update_fill_setting(db, feature, is_open, updated_by=admin.id)
+    except ValueError as exc:
+        return error_response(msg=str(exc), code=400)
+    action = "开放" if is_open else "关闭"
+    return success_response(data=data, msg=f"{action}填写已更新")
 
 
 @router.get("/performance")
@@ -295,7 +325,47 @@ async def list_reward_recognitions(
     if status:
         query = query.filter(RewardRecognition.status == status)
     rows = query.order_by(RewardRecognition.created_at.desc()).all()
-    return success_response(data=[recognition_to_dict(row) for row in rows])
+    return success_response(data=[recognition_to_dict(row, db) for row in rows])
+
+
+@reward_router.get("/assistant-summary")
+async def get_reward_assistant_summary(admin: SysUser = Depends(require_admin), db: Session = Depends(get_db)):
+    rows = (
+        db.query(RewardRecognition, HrTeacherProfile)
+        .join(HrTeacherProfile, RewardRecognition.profile_id == HrTeacherProfile.id)
+        .filter(RewardRecognition.status == "approved")
+        .order_by(HrTeacherProfile.id.asc(), RewardRecognition.audited_at.desc(), RewardRecognition.created_at.desc())
+        .all()
+    )
+    grouped: Dict[int, Dict[str, Any]] = {}
+    for recognition, profile in rows:
+        item = grouped.setdefault(
+            profile.id,
+            {
+                "profile_id": profile.id,
+                "teacher_name": profile.name,
+                "employee_no": profile.employee_no,
+                "department": profile.department,
+                "approved_count": 0,
+                "total_amount": 0,
+                "awards": [],
+            },
+        )
+        amount = int(recognition.final_amount or 0)
+        item["approved_count"] += 1
+        item["total_amount"] += amount
+        item["awards"].append(reward_assistant_award_to_dict(recognition))
+
+    teachers = [item for item in grouped.values() if item["approved_count"] >= 2]
+    teachers.sort(key=lambda item: (-item["total_amount"], item["teacher_name"] or ""))
+    return success_response(
+        data={
+            "teacher_count": len(teachers),
+            "recognition_count": sum(item["approved_count"] for item in teachers),
+            "total_amount": sum(item["total_amount"] for item in teachers),
+            "teachers": teachers,
+        }
+    )
 
 
 @reward_router.get("/rules")
@@ -459,8 +529,9 @@ async def audit_reward_recognition(
         row.final_amount = int(payload.get("final_amount") or 0)
     row.audit_comment = payload.get("comment")
     row.audited_at = datetime.utcnow()
+    sync_linked_achievement_status(db, row)
     db.commit()
-    return success_response(data=recognition_to_dict(row), msg="奖励认定审核完成")
+    return success_response(data=recognition_to_dict(row, db), msg="奖励认定审核完成")
 
 
 @reward_router.post("/batches")
@@ -536,23 +607,86 @@ def title_application_to_dict(row: HrTitleApplication) -> Dict[str, Any]:
     }
 
 
-def recognition_to_dict(row: RewardRecognition) -> Dict[str, Any]:
+def sync_linked_achievement_status(db: Session, row: RewardRecognition) -> None:
+    if not row.achievement_id:
+        return
+    achievement = db.query(BizAchievement).filter(BizAchievement.id == row.achievement_id).first()
+    if not achievement:
+        return
+    if row.status == "approved":
+        achievement.status = AchievementStatus.APPROVED
+        student = db.query(SysStudent).filter(SysStudent.id == achievement.student_id).first()
+        if student:
+            student.persona_cache = None
+    elif row.status == "rejected":
+        achievement.status = AchievementStatus.REJECTED
+    achievement.audit_comment = row.audit_comment
+
+
+def recognition_to_dict(row: RewardRecognition, db: Optional[Session] = None) -> Dict[str, Any]:
+    detail = row.calculation_detail or {}
+    request_data = detail.get("request_data") or {}
+    subcategory = request_subcategory(request_data, row.category)
+    label_parts = reward_label_parts(row.category, row.level, row.rank, subcategory)
+    profile = db.query(HrTeacherProfile).filter(HrTeacherProfile.id == row.profile_id).first() if db and row.profile_id else None
+    achievement = db.query(BizAchievement).filter(BizAchievement.id == row.achievement_id).first() if db and row.achievement_id else None
     return {
         "id": row.id,
         "achievement_id": row.achievement_id,
         "profile_id": row.profile_id,
+        "teacher_name": profile.name if profile else None,
+        "employee_no": profile.employee_no if profile else None,
+        "department": profile.department if profile else None,
+        "achievement_title": achievement.title if achievement else request_data.get("achievement_title"),
+        "achievement_type": achievement.type if achievement else request_data.get("achievement_domain"),
+        "evidence_url": achievement.evidence_url if achievement else request_data.get("evidence_url"),
+        "declared_award": request_data.get("award"),
+        "declared_bonus": request_data.get("declared_bonus"),
         "category": row.category,
+        "category_text": label_parts["category_text"],
+        "subcategory_text": label_parts["subcategory_text"],
         "level": row.level,
+        "level_text": label_parts["level_text"],
         "rank": row.rank,
+        "rank_text": label_parts["rank_text"],
         "base_amount": row.base_amount,
         "final_amount": row.final_amount,
-        "policy_basis": row.policy_basis,
+        "content": reward_content_text(row),
+        "policy_basis": row.policy_basis or POLICY_BASIS,
         "calculation_detail": row.calculation_detail,
         "status": row.status,
         "audit_comment": row.audit_comment,
         "batch_id": row.batch_id,
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
+
+
+def reward_assistant_award_to_dict(row: RewardRecognition) -> Dict[str, Any]:
+    detail = row.calculation_detail or {}
+    request_data = detail.get("request_data") or {}
+    subcategory = request_subcategory(request_data, row.category)
+    label_parts = reward_label_parts(row.category, row.level, row.rank, subcategory)
+    return {
+        "id": row.id,
+        "category": row.category,
+        "category_text": label_parts["category_text"],
+        "subcategory_text": label_parts["subcategory_text"],
+        "level": row.level,
+        "level_text": label_parts["level_text"],
+        "rank": row.rank,
+        "rank_text": label_parts["rank_text"],
+        "final_amount": row.final_amount or 0,
+        "content": reward_content_text(row),
+        "policy_basis": row.policy_basis or POLICY_BASIS,
+        "audited_at": row.audited_at.isoformat() if row.audited_at else None,
+    }
+
+
+def reward_content_text(row: RewardRecognition) -> str:
+    detail = row.calculation_detail or {}
+    request_data = detail.get("request_data") or {}
+    subcategory = request_subcategory(request_data, row.category)
+    return build_reward_content_text(row.category, row.level, row.rank, subcategory)
 
 
 def batch_to_dict(row: RewardBatch) -> Dict[str, Any]:

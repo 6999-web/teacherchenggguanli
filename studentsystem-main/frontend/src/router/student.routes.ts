@@ -66,12 +66,6 @@ export const studentRoutes: Array<RouteRecordRaw> = [
         component: () => import('../components/student/hr/HrTitleCheck.vue'),
         meta: { title: '职称自查' },
       },
-      {
-        path: 'teaching-reward-apply',
-        name: 'teachingRewardApply',
-        component: () => import('../components/student/hr/TeachingRewardApply.vue'),
-        meta: { title: '教学奖励申报' },
-      },
     ],
   },
 ]

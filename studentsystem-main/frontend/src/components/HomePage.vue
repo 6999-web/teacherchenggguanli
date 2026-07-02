@@ -8,35 +8,26 @@
           </n-icon>
         </div>
         <div>
-          <h1>教师综合管理平台</h1>
-          <p>评价体系、教师人事管理体系统一入口</p>
+          <h1>教师成果管理平台</h1>
+          <p>教师档案、教学奖励、绩效记录和职称自查统一入口</p>
         </div>
       </div>
 
       <div class="system-grid">
-        <button class="system-card evaluation-card" type="button" @click="goToStudentLogin">
-          <span class="card-icon">
-            <IconChartBar :size="34" />
-          </span>
-          <span class="card-title">评价管理体系</span>
-          <span class="card-desc">保留现有教学评价与分析能力，查看评价结果和教学画像。</span>
-          <span class="card-action">进入评价体系</span>
-        </button>
-
-        <button class="system-card reward-card" type="button" @click="goToReward">
+        <button class="system-card reward-card" type="button" @click="goToCollect">
           <span class="card-icon">
             <IconAward :size="34" />
           </span>
-          <span class="card-title">人事奖励申报</span>
-          <span class="card-desc">教学成果申报、奖励规则匹配、奖励认定审核、年度批次发放。</span>
-          <span class="card-action">进入人事奖励</span>
+          <span class="card-title">成果收集与展示</span>
+          <span class="card-desc">教学类成果、科研类成果统一提交，自动进入奖励认定审核。</span>
+          <span class="card-action">进入成果收集</span>
         </button>
 
         <button class="system-card hr-card" type="button" @click="goToHr">
           <span class="card-icon">
             <IconUsers :size="34" />
           </span>
-          <span class="card-title">教师人事管理体系</span>
+          <span class="card-title">教师成果管理平台</span>
           <span class="card-desc">教师一张表、档案附件、绩效记录、职称自查与材料缺口提醒。</span>
           <span class="card-action">进入人事体系</span>
         </button>
@@ -56,7 +47,6 @@
 import { useRouter } from 'vue-router'
 import {
   IconAward,
-  IconChartBar,
   IconSchool,
   IconShieldCheck,
   IconUsers
@@ -65,12 +55,8 @@ import {
 const router = useRouter()
 const adminLoginUrl = import.meta.env.VITE_ADMIN_LOGIN_URL || `${window.location.protocol}//${window.location.hostname}:5005/admin/login`
 
-const goToStudentLogin = () => {
-  router.push('/student/login')
-}
-
-const goToReward = () => {
-  router.push('/student/login?redirect=/student/teaching-reward-apply')
+const goToCollect = () => {
+  router.push('/student/login?redirect=/student/achievement')
 }
 
 const goToHr = () => {
@@ -137,7 +123,7 @@ const goToAdminLogin = () => {
 
 .system-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -174,7 +160,6 @@ const goToAdminLogin = () => {
   margin-bottom: 18px;
 }
 
-.evaluation-card .card-icon { background: #2563eb; }
 .reward-card .card-icon { background: #0f766e; }
 .hr-card .card-icon { background: #7c3aed; }
 

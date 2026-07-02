@@ -1,6 +1,6 @@
 ﻿<template>
   <div class="admin-login-container">
-    <button class="back-home" type="button" @click="goToPortal">
+    <button class="back-home" type="button" @click="goToHome">
       ← 返回首页
     </button>
 
@@ -47,7 +47,7 @@
         </div>
         
         <div class="welcome-text">
-          <h1>教师人事管理体系</h1>
+          <h1>教师成果管理平台</h1>
           <p>档案维护 · 绩效管理</p>
         </div>
       </div>
@@ -58,7 +58,7 @@
       <div class="form-container">
         <div class="form-header">
           <h2>您好！</h2>
-          <p class="form-subtitle">欢迎来到教师人事管理体系管理端</p>
+          <p class="form-subtitle">欢迎来到教师成果管理平台管理端</p>
         </div>
 
         <el-form
@@ -115,7 +115,7 @@
 
     <!-- 底部版权信息 -->
     <div class="copyright">
-      <p>© 2024 教师人事管理体系 | 版权所有</p>
+      <p>© 2024 教师成果管理平台 | 版权所有</p>
     </div>
   </div>
 </template>
@@ -194,9 +194,10 @@ const goToStudentLogin = () => {
   window.location.href = import.meta.env.VITE_STUDENT_LOGIN_URL || `${window.location.protocol}//${window.location.hostname}:5004/student/login`
 }
 
-const goToPortal = () => {
-  window.location.href = `${window.location.protocol}//${window.location.hostname}:5001/`
+const goToHome = () => {
+  window.location.href = `${window.location.protocol}//${window.location.hostname}:5001/hr.html`
 }
+
 </script>
 
 <style scoped>
@@ -214,16 +215,14 @@ const goToPortal = () => {
   position: absolute;
   top: 20px;
   left: 20px;
-  z-index: 10;
-  display: inline-flex;
-  align-items: center;
-  padding: 0;
+  z-index: 20;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  padding: 0;
 }
 
 .back-home:hover {

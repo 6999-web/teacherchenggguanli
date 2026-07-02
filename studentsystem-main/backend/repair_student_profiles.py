@@ -30,7 +30,7 @@ def repair_student_profiles() -> None:
                     user_id=user.id,
                     student_number=student_number,
                     name=DEFAULT_NAMES.get(user.username, user.username),
-                    major="教师人事管理体系",
+                    major="教师成果管理平台",
                 )
             )
             changed = True

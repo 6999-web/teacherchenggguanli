@@ -4,7 +4,19 @@
       <template #header>
         <div class="card-header">
           <span>绩效记录管理</span>
-          <el-button type="primary" @click="refreshAll">刷新</el-button>
+          <div class="header-actions">
+            <el-tag :type="fillSettings.performance_open ? 'success' : 'info'">
+              {{ fillSettings.performance_open ? '教师端已开放填写' : '教师端当前关闭' }}
+            </el-tag>
+            <el-button
+              :type="fillSettings.performance_open ? 'danger' : 'success'"
+              :loading="settingsLoading"
+              @click="togglePerformanceOpen"
+            >
+              {{ fillSettings.performance_open ? '关闭开放填写' : '开放填写' }}
+            </el-button>
+            <el-button type="primary" @click="refreshAll">刷新</el-button>
+          </div>
         </div>
       </template>
 
@@ -166,11 +178,23 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { createHrPerformance, getHrPerformanceRecords, getHrTeachers, updateHrPerformance } from '@/api'
+import {
+  createHrPerformance,
+  getHrFillSettings,
+  getHrPerformanceRecords,
+  getHrTeachers,
+  updateHrFillSetting,
+  updateHrPerformance,
+} from '@/api'
 
 const rows = ref<any[]>([])
 const teachers = ref<any[]>([])
 const loading = ref(false)
+const settingsLoading = ref(false)
+const fillSettings = reactive({
+  performance_open: false,
+  title_check_open: false,
+})
 const filters = reactive<any>({})
 const form = reactive<any>(defaultForm())
 
@@ -221,9 +245,13 @@ async function loadRows() {
   }
 }
 
+async function loadFillSettings() {
+  const data = await getHrFillSettings()
+  Object.assign(fillSettings, data || {})
+}
+
 async function refreshAll() {
-  await loadTeachers()
-  await loadRows()
+  await Promise.all([loadTeachers(), loadRows(), loadFillSettings()])
 }
 
 function resetForm() {
@@ -259,6 +287,17 @@ async function submit() {
   await loadRows()
 }
 
+async function togglePerformanceOpen() {
+  settingsLoading.value = true
+  try {
+    const data = await updateHrFillSetting('performance', !fillSettings.performance_open)
+    Object.assign(fillSettings, data || {})
+    ElMessage.success(fillSettings.performance_open ? '已开放教师端绩效填写' : '已关闭教师端绩效填写')
+  } finally {
+    settingsLoading.value = false
+  }
+}
+
 onMounted(refreshAll)
 </script>
 
@@ -271,6 +310,13 @@ onMounted(refreshAll)
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .page-alert {

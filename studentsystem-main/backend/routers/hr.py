@@ -19,7 +19,14 @@ from models import (
     RewardRule,
     SysStudent,
 )
+from services.hr_fill_settings import closed_fill_message, fill_settings_to_dict, is_fill_open
 from services.hr_reward_service import calculate_structured_reward, summarize_title_gap
+from services.reward_policy_labels import (
+    POLICY_BASIS,
+    request_subcategory,
+    reward_content_text,
+    reward_label_parts,
+)
 from services.teaching_reward_rules import calculate_teaching_reward
 from utils import error_response, success_response
 
@@ -143,8 +150,15 @@ async def upload_attachment(
     return success_response(data=attachment_to_dict(row), msg="附件已归档")
 
 
+@router.get("/fill-settings")
+async def get_fill_settings(student: SysStudent = Depends(require_student), db: Session = Depends(get_db)):
+    return success_response(data=fill_settings_to_dict(db))
+
+
 @router.get("/performance")
 async def list_performance(student: SysStudent = Depends(require_student), db: Session = Depends(get_db)):
+    if not is_fill_open(db, "performance"):
+        return error_response(msg=closed_fill_message("performance"), code=403)
     profile = ensure_profile(db, student)
     rows = (
         db.query(HrPerformanceRecord)
@@ -161,6 +175,8 @@ async def get_title_gap(
     student: SysStudent = Depends(require_student),
     db: Session = Depends(get_db),
 ):
+    if not is_fill_open(db, "title_check"):
+        return error_response(msg=closed_fill_message("title_check"), code=403)
     profile = ensure_profile(db, student)
     approved_count = (
         db.query(BizAchievement)
@@ -368,16 +384,25 @@ def change_request_to_dict(row: HrProfileChangeRequest) -> Dict[str, Any]:
 
 
 def reward_recognition_to_dict(row: RewardRecognition) -> Dict[str, Any]:
+    detail = row.calculation_detail or {}
+    request_data = detail.get("request_data") or {}
+    subcategory = request_subcategory(request_data, row.category)
+    label_parts = reward_label_parts(row.category, row.level, row.rank, subcategory)
     return {
         "id": row.id,
         "achievement_id": row.achievement_id,
         "profile_id": row.profile_id,
         "category": row.category,
+        "category_text": label_parts["category_text"],
+        "subcategory_text": label_parts["subcategory_text"],
         "level": row.level,
+        "level_text": label_parts["level_text"],
         "rank": row.rank,
+        "rank_text": label_parts["rank_text"],
         "base_amount": row.base_amount,
         "final_amount": row.final_amount,
-        "policy_basis": row.policy_basis,
+        "content": reward_content_text(row.category, row.level, row.rank, subcategory),
+        "policy_basis": row.policy_basis or POLICY_BASIS,
         "calculation_detail": row.calculation_detail,
         "status": row.status,
         "audit_comment": row.audit_comment,

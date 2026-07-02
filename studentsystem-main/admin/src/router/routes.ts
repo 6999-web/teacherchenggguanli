@@ -13,12 +13,6 @@ export const adminRoutes: Array<RouteRecordRaw> = [
         meta: { title: '数据概览' },
       },
       {
-        path: 'achievements',
-        name: 'adminAchievements',
-        component: () => import('../components/admin/achievement/AchievementList.vue'),
-        meta: { title: '成果审核' },
-      },
-      {
         path: 'hr/teachers',
         name: 'adminHrTeachers',
         component: () => import('../components/admin/hr/HrTeachers.vue'),

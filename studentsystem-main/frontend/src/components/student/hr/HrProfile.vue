@@ -65,7 +65,7 @@
           <div class="reward-row">
             <div>
               <strong>{{ label(categoryMap, item.category) }}</strong>
-              <span>{{ label(levelMap, item.level) }} / {{ label(rankMap, item.rank) }}</span>
+              <span>{{ labelRewardLevel(item) }}</span>
               <small>{{ rewardContent(item) }}</small>
             </div>
             <div class="reward-amount">
@@ -116,6 +116,12 @@ function label(map: Record<string, string>, value: string) {
   return map[value] || value || '-'
 }
 
+function labelRewardLevel(item: any) {
+  return [item.level_text || label(levelMap, item.level), item.rank_text || label(rankMap, item.rank)]
+    .filter(part => part && part !== '-')
+    .join(' / ') || '-'
+}
+
 function statusText(status: string) {
   const map: Record<string, string> = { pending: '待认定', approved: '已认定', rejected: '已驳回' }
   return map[status] || status || '-'
@@ -139,6 +145,7 @@ function matchingRule(item: any): RewardRuleOption | null {
 }
 
 function rewardContent(item: any) {
+  if (item.content) return item.content
   const rule = matchingRule(item)
   if (rule) return rewardContentLabel(rule)
   return item?.policy_basis || ''

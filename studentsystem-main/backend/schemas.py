@@ -115,6 +115,11 @@ class AchievementCreate(BaseModel):
     evidence_url: Optional[str] = None
 
 
+class TeachingRewardRecognizeRequest(BaseModel):
+    title: str = Field(default="", max_length=200)
+    attachment_names: List[str] = Field(default_factory=list, max_length=10)
+
+
 class AchievementResponse(BaseModel):
     id: int
     title: str

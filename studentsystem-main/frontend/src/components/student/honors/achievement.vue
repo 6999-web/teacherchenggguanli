@@ -17,12 +17,6 @@
             </template>
             成果收集
           </n-button>
-          <n-button type="info" @click="upload_certificate_ocr" class="ocr_btn">
-            <template #icon>
-              <Scan :size="24" />
-            </template>
-            图片上传
-          </n-button>
         </div>
       </div>
     </n-card>
@@ -119,7 +113,6 @@ import {
   IconCertificate as Certificate,
   IconHelpCircle as HelpCircle,
   IconMedal as Medal,
-  IconScan as Scan,
 } from '@tabler/icons-vue'
 
 import { 
@@ -331,6 +324,7 @@ const typeMap: Record<string, string> = {
   // 英文category映射
   'competition': '竞赛类',
   'contest': '竞赛类',
+  'teaching': '教学类成果',
   'research': '科研类',
   'project': '项目类',
   'paper': '论文类',
@@ -366,8 +360,9 @@ const level_options: SelectOption[] = [
 ]
 
 const type_options: SelectOption[] = [
+  { label: '教学类成果', value: 'teaching' },
+  { label: '科研类成果', value: '2' },
   { label: '竞赛类', value: '1' },
-  { label: '科研类', value: '2' },
   { label: '项目类', value: '3' },
   { label: '论文类', value: '4' },
   { label: '专利类', value: '5' },
@@ -553,8 +548,11 @@ const filtered_achievements = computed((): AchievementItem[] => {
         case '1':
           typeMatches = isAchievementOfType(achievement, ['1', 'competition', 'contest', '竞赛类'])
           break
+        case 'teaching':
+          typeMatches = isAchievementOfType(achievement, ['teaching', '教学类成果'])
+          break
         case '2':
-          typeMatches = isAchievementOfType(achievement, ['2', 'research', '科研类'])
+          typeMatches = isAchievementOfType(achievement, ['2', 'research', '科研类', '科研类成果'])
           break
         case '3':
           typeMatches = isAchievementOfType(achievement, ['3', 'project', '项目类'])
@@ -945,12 +943,6 @@ const collect_achievement = (): void => {
 
 
 
-
-// OCR证书识别方法
-const upload_certificate_ocr = (): void => {
-  console.log('跳转到OCR证书识别页面')
-  router.push('/student/certificate-ocr')
-}
 
 // 查看成果详情
 const view_achievement_detail = async (id: string): Promise<void> => {

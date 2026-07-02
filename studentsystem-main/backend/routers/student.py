@@ -1,24 +1,40 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Any, Dict, Optional, List
 import uuid
 import httpx
 from datetime import datetime, timedelta
 from database import get_db
 from schemas import (
     OCRResponse, AchievementCreate, AchievementResponse,
-    ChatRequest, ChatResponse, PersonaResponse
+    ChatRequest, ChatResponse, PersonaResponse,
+    TeachingRewardRecognizeRequest,
 )
 from utils import success_response, error_response
 from models import (
     SysStudent, BizAchievement, AchievementStatus,
-    AiChatSession, AiChatMessage, MessageRole, SysTeacher
+    AiChatSession, AiChatMessage, MessageRole, SysTeacher,
+    RewardRecognition,
 )
 from dependencies import require_student
 from config import settings
+from services.hr_reward_service import calculate_structured_reward
+from services.reward_policy_labels import POLICY_BASIS
+from services.reward_policy_recognizer import recognize_teaching_reward
 from services.teaching_reward_rules import calculate_teaching_reward
 
 router = APIRouter(prefix="/api/v1/student", tags=["Student"])
+
+
+@router.post("/reward/recognize")
+async def recognize_reward_policy(
+    payload: TeachingRewardRecognizeRequest,
+    student: SysStudent = Depends(require_student),
+):
+    """Recognize teaching reward type and amount from title and attachment names."""
+    return success_response(
+        data=recognize_teaching_reward(payload.title, payload.attachment_names)
+    )
 
 
 @router.post("/ocr/recognize")
@@ -236,6 +252,11 @@ async def create_achievement(
     db.add(new_achievement)
     db.commit()
     db.refresh(new_achievement)
+
+    recognition_id = None
+    if _should_create_reward_recognition(new_achievement):
+        recognition = _create_reward_recognition_from_achievement(db, student, new_achievement)
+        recognition_id = recognition.id
     
     # --- 团队成员自动同步 ---
     # 从 content_json 中读取 team_members，为每个匹配到的学生创建关联成果
@@ -286,10 +307,102 @@ async def create_achievement(
     return success_response(
         data={
             "id": new_achievement.id,
+            "recognition_id": recognition_id,
             "synced_members": synced_members
         },
         msg="Achievement submitted successfully"
     )
+
+
+def _should_create_reward_recognition(achievement: BizAchievement) -> bool:
+    content = achievement.content_json if isinstance(achievement.content_json, dict) else {}
+    domain = str(content.get("achievement_domain") or achievement.type or "").strip()
+    return domain in {"teaching", "research"}
+
+
+def _create_reward_recognition_from_achievement(
+    db: Session,
+    student: SysStudent,
+    achievement: BizAchievement,
+) -> RewardRecognition:
+    from routers.hr import ensure_profile, load_reward_rules
+
+    content: Dict[str, Any] = achievement.content_json if isinstance(achievement.content_json, dict) else {}
+    profile = ensure_profile(db, student)
+    domain = str(content.get("achievement_domain") or achievement.type or "").strip()
+    declared_bonus = _int_or_zero(content.get("declared_bonus") or content.get("bonus") or content.get("amount"))
+    request_data: Dict[str, Any] = {
+        **content,
+        "achievement_id": achievement.id,
+        "achievement_title": achievement.title,
+        "achievement_domain": domain,
+        "declared_bonus": declared_bonus,
+        "evidence_url": achievement.evidence_url,
+    }
+
+    if domain == "research":
+        calculation = {
+            "matched": False,
+            "category": "research_achievement",
+            "recognized_level": None,
+            "recognized_rank": None,
+            "base_amount": declared_bonus,
+            "final_amount": declared_bonus,
+            "currency": "CNY",
+            "policy_basis": "科研类成果由管理员按材料人工认定",
+            "adjustments": [],
+            "manual_required": True,
+            "manual_reasons": ["科研类成果不进行教学奖励规则自动识别，需要管理员人工认定"],
+            "request_data": request_data,
+        }
+        row = RewardRecognition(
+            achievement_id=achievement.id,
+            profile_id=profile.id,
+            category="research_achievement",
+            level=None,
+            rank=None,
+            base_amount=declared_bonus,
+            final_amount=declared_bonus,
+            policy_basis=calculation["policy_basis"],
+            calculation_detail=calculation,
+            status="pending",
+        )
+    else:
+        reward_payload = {
+            **request_data,
+            "category": content.get("category") or content.get("teaching_reward_category"),
+            "subcategory": content.get("subcategory"),
+            "level": content.get("level"),
+            "rank": content.get("rank") or content.get("award_rank"),
+        }
+        calculation = calculate_structured_reward(reward_payload, load_reward_rules(db))
+        calculation["request_data"] = reward_payload
+        final_amount = declared_bonus or int(calculation.get("final_amount") or 0)
+        base_amount = int(calculation.get("base_amount") or final_amount or 0)
+        row = RewardRecognition(
+            achievement_id=achievement.id,
+            profile_id=profile.id,
+            category=reward_payload.get("category") or "teaching_achievement",
+            level=calculation.get("recognized_level"),
+            rank=calculation.get("recognized_rank"),
+            base_amount=base_amount,
+            final_amount=final_amount,
+            policy_basis=calculation.get("policy_basis") or POLICY_BASIS,
+            calculation_detail=calculation,
+            status="pending",
+        )
+
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def _int_or_zero(value: Any) -> int:
+    try:
+        return int(float(value or 0))
+    except (TypeError, ValueError):
+        return 0
 
 
 @router.get("/achievements")

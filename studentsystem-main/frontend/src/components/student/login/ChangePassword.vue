@@ -7,7 +7,7 @@
             <IconSchool :size="32" />
           </n-icon>
         </div>
-        <h1>教师人事管理体系</h1>
+        <h1>教师成果管理平台</h1>
       </div>
 
       <div class="change-pwd-box">

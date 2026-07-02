@@ -833,7 +833,7 @@ const process_ocr = async (item: FileItem) => {
       // ========== 奖项级别智能识别 ==========
       
       if (raw.award_level) {
-        let text = String(raw.award_level)
+        const text = String(raw.award_level)
         console.log('🏆 开始识别奖项级别:', text)
         
         const nationalKeywords = ['全国', '教育部', '国家级', '中国', '中华', '国务院', '中央']

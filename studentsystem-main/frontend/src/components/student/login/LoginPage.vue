@@ -1,11 +1,8 @@
 <template>
   <div class="login-page">
-    <div class="back-home" @click="goToHome">
-      <n-icon size="20" class="back-icon">
-        <IconArrowLeft :size="20" />
-      </n-icon>
-      <span>返回首页</span>
-    </div>
+    <button class="back-home" type="button" @click="goToHome">
+      ← 返回首页
+    </button>
 
     <div class="login-container">
       <div class="platform-header">
@@ -115,7 +112,6 @@ import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   IconUser,
-  IconArrowLeft,
   IconIdBadge2,
   IconLock
 } from '@tabler/icons-vue'
@@ -235,10 +231,6 @@ const handleChangePwd = () => {
   })
 }
 
-const goToHome = () => {
-  window.location.href = `${window.location.protocol}//${window.location.hostname}:5001/`
-}
-
 function loginRedirectPath() {
   const redirect = route.query.redirect
   if (typeof redirect === 'string' && redirect.startsWith('/student/')) {
@@ -248,13 +240,16 @@ function loginRedirectPath() {
 }
 
 function getSystemTitle(path: string) {
-  if (path.startsWith('/student/hr')) return '教师人事管理体系'
-  if (path.startsWith('/student/teaching-reward')) return '教师人事管理体系'
+  if (path.startsWith('/student/hr')) return '教师成果管理平台'
   return '教师成果管理平台'
 }
 
 function updateDocumentTitle() {
   document.title = systemTitle.value
+}
+
+function goToHome() {
+  window.location.href = `${window.location.protocol}//${window.location.hostname}:5001/hr.html`
 }
 </script>
 
@@ -277,15 +272,18 @@ function updateDocumentTitle() {
   position: absolute;
   top: 20px;
   left: 20px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+  z-index: 10;
+  border: 0;
+  background: transparent;
   color: #ffffff;
   font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
 }
 
-.back-icon {
-  margin-right: 5px;
+.back-home:hover {
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .login-container {

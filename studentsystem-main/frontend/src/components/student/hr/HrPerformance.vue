@@ -1,5 +1,18 @@
 <template>
   <div class="hr-page">
+    <n-card v-if="accessLoading" class="closed-card">
+      <n-spin size="large" />
+    </n-card>
+
+    <n-card v-else-if="!performanceOpen" class="closed-card">
+      <n-empty description="当前无法填写">
+        <template #extra>
+          <span class="closed-tip">历年绩效当前未开放填写，请等待管理员开放后再进入。</span>
+        </template>
+      </n-empty>
+    </n-card>
+
+    <template v-else>
     <n-card class="summary-card">
       <div class="summary-header">
         <div>
@@ -41,17 +54,20 @@
       <n-data-table :columns="columns" :data="rows" :loading="loading" />
       <n-empty v-if="!loading && rows.length === 0" description="暂无绩效记录，请联系管理员录入绩效。" class="empty-state" />
     </n-card>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, h, onMounted, ref } from 'vue'
 import { NTag, useMessage } from 'naive-ui'
-import { getHrPerformance } from '@/api'
+import { getHrFillSettings, getHrPerformance } from '@/api'
 
 const message = useMessage()
 const rows = ref<any[]>([])
 const loading = ref(false)
+const accessLoading = ref(true)
+const performanceOpen = ref(false)
 
 const latestRecord = computed(() => rows.value[0] || null)
 
@@ -91,6 +107,7 @@ function periodText(value: string) {
 }
 
 async function loadRows() {
+  if (!performanceOpen.value) return
   loading.value = true
   try {
     rows.value = await getHrPerformance()
@@ -101,7 +118,22 @@ async function loadRows() {
   }
 }
 
-onMounted(loadRows)
+async function loadAccess() {
+  accessLoading.value = true
+  try {
+    const settings = await getHrFillSettings()
+    performanceOpen.value = Boolean(settings?.performance_open)
+    if (performanceOpen.value) {
+      await loadRows()
+    }
+  } catch (error) {
+    message.error('无法加载开放填写状态，请稍后重试')
+  } finally {
+    accessLoading.value = false
+  }
+}
+
+onMounted(loadAccess)
 </script>
 
 <style scoped>
@@ -152,5 +184,16 @@ onMounted(loadRows)
 
 .empty-state {
   margin-top: 18px;
+}
+
+.closed-card {
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closed-tip {
+  color: #64748b;
 }
 </style>

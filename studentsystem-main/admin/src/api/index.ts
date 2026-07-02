@@ -4,10 +4,7 @@
 import request from '@/utils/request'
 import type {
     LoginRequest,
-    LoginResponse,
-    AchievementsReviewQuery,
-    AchievementsReviewResponse,
-    AuditAchievementRequest
+    LoginResponse
 } from './types'
 
 // ==================== 认证 ====================
@@ -18,12 +15,8 @@ export function login(data: LoginRequest): Promise<LoginResponse> {
 
 // ==================== 管理员 API ====================
 
-export function getAchievementsForReview(params?: AchievementsReviewQuery): Promise<AchievementsReviewResponse> {
-    return request.get('/api/v1/admin/achievements', { params })
-}
-
-export function auditAchievement(achievementId: number, data: AuditAchievementRequest): Promise<void> {
-    return request.patch(`/api/v1/admin/achievements/${achievementId}/audit`, data)
+export function getAdminAuditSummary(): Promise<any> {
+    return request.get('/api/v1/admin/dashboard/audit-summary')
 }
 
 export function getHrTeachers(params?: any): Promise<any> {
@@ -54,6 +47,14 @@ export function updateHrPerformance(recordId: number, data: any): Promise<any> {
     return request.patch(`/api/v1/admin/hr/performance/${recordId}`, data)
 }
 
+export function getHrFillSettings(): Promise<any> {
+    return request.get('/api/v1/admin/hr/fill-settings')
+}
+
+export function updateHrFillSetting(feature: 'performance' | 'title_check', isOpen: boolean): Promise<any> {
+    return request.patch('/api/v1/admin/hr/fill-settings', { feature, is_open: isOpen })
+}
+
 export function createHrTitleRule(data: any): Promise<any> {
     return request.post('/api/v1/admin/hr/title-rules', data)
 }
@@ -72,6 +73,10 @@ export function createRewardRecognition(data: any): Promise<any> {
 
 export function auditRewardRecognition(id: number, data: any): Promise<any> {
     return request.patch(`/api/v1/admin/reward/recognitions/${id}/audit`, data)
+}
+
+export function getRewardAssistantSummary(): Promise<any> {
+    return request.get('/api/v1/admin/reward/assistant-summary')
 }
 
 export function getRewardBatches(): Promise<any> {
@@ -154,8 +159,7 @@ export function formatDate(dateStr: string, format: string = 'YYYY-MM-DD HH:mm')
 
 export default {
     login,
-    getAchievementsForReview,
-    auditAchievement,
+    getAdminAuditSummary,
     getHrTeachers,
     getHrTeacherDetail,
     getHrChangeRequests,
@@ -163,11 +167,14 @@ export default {
     createHrPerformance,
     getHrPerformanceRecords,
     updateHrPerformance,
+    getHrFillSettings,
+    updateHrFillSetting,
     createHrTitleRule,
     getHrTitleRules,
     getRewardRecognitions,
     createRewardRecognition,
     auditRewardRecognition,
+    getRewardAssistantSummary,
     getRewardBatches,
     createRewardBatch,
     getRewardRules,

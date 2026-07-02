@@ -41,8 +41,8 @@ services:
       - SECRET_KEY=your-production-secret-key-change-it
       - UPLOAD_DIR=/app/uploads
       # AI API Key
-      - QWEN_API_KEY=sk-e529a14ace5644a59fede114654d9a5e
-      - DASHSCOPE_API_KEY=sk-e529a14ace5644a59fede114654d9a5e
+      - QWEN_API_KEY=${QWEN_API_KEY:-}
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY:-}
       # 视觉模型名称
       - QWEN_VL_MODEL=qwen-vl-plus
     volumes:

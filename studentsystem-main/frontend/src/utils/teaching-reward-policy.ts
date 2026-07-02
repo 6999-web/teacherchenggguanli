@@ -24,6 +24,7 @@ export const categoryMap: Record<string, string> = {
   sanquan_education: '三全育人专项奖',
   teaching_management: '教学管理奖',
   ideological_political: '思政类教学工作专项奖',
+  research_achievement: '科研类成果',
 }
 
 export const levelMap: Record<string, string> = {

@@ -139,7 +139,7 @@ export interface CertificateRecognitionResponse {
 // ============= 成果相关 =============
 
 export type AchievementStatus = 'pending' | 'approved' | 'rejected'
-export type AchievementType = 'competition' | 'paper' | 'patent' | 'project' | 'certificate'
+export type AchievementType = 'competition' | 'paper' | 'patent' | 'project' | 'certificate' | 'teaching' | 'research'
 
 export interface Achievement {
     id: number

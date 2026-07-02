@@ -4,7 +4,19 @@
       <template #header>
         <div class="card-header">
           <span>职称规则配置</span>
-          <el-button type="primary" @click="loadRows">刷新</el-button>
+          <div class="header-actions">
+            <el-tag :type="fillSettings.title_check_open ? 'success' : 'info'">
+              {{ fillSettings.title_check_open ? '教师端已开放填写' : '教师端当前关闭' }}
+            </el-tag>
+            <el-button
+              :type="fillSettings.title_check_open ? 'danger' : 'success'"
+              :loading="settingsLoading"
+              @click="toggleTitleCheckOpen"
+            >
+              {{ fillSettings.title_check_open ? '关闭开放填写' : '开放填写' }}
+            </el-button>
+            <el-button type="primary" @click="refreshAll">刷新</el-button>
+          </div>
         </div>
       </template>
       <el-form :model="form" label-width="150px">
@@ -35,14 +47,28 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { createHrTitleRule, getHrTitleRules } from '@/api'
+import { createHrTitleRule, getHrFillSettings, getHrTitleRules, updateHrFillSetting } from '@/api'
 
 const rows = ref<any[]>([])
+const settingsLoading = ref(false)
+const fillSettings = reactive({
+  performance_open: false,
+  title_check_open: false,
+})
 const attachmentText = ref('职称证书')
 const form = reactive<any>({ target_title: '副教授', employment_type: 'all', min_approved_achievements: 2, required_performance_grade: '优秀', min_years_in_current_title: 3 })
 
 async function loadRows() {
   rows.value = await getHrTitleRules()
+}
+
+async function loadFillSettings() {
+  const data = await getHrFillSettings()
+  Object.assign(fillSettings, data || {})
+}
+
+async function refreshAll() {
+  await Promise.all([loadRows(), loadFillSettings()])
 }
 
 async function submit() {
@@ -51,10 +77,22 @@ async function submit() {
   loadRows()
 }
 
-onMounted(loadRows)
+async function toggleTitleCheckOpen() {
+  settingsLoading.value = true
+  try {
+    const data = await updateHrFillSetting('title_check', !fillSettings.title_check_open)
+    Object.assign(fillSettings, data || {})
+    ElMessage.success(fillSettings.title_check_open ? '已开放教师端职称自查填写' : '已关闭教师端职称自查填写')
+  } finally {
+    settingsLoading.value = false
+  }
+}
+
+onMounted(refreshAll)
 </script>
 
 <style scoped>
 .admin-page { padding: 20px; }
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
 </style>

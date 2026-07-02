@@ -1,6 +1,18 @@
 <template>
   <div class="hr-page">
-    <n-card title="职称申报自查">
+    <n-card v-if="accessLoading" class="closed-card">
+      <n-spin size="large" />
+    </n-card>
+
+    <n-card v-else-if="!titleCheckOpen" class="closed-card">
+      <n-empty description="当前无法填写">
+        <template #extra>
+          <span class="closed-tip">职称自查当前未开放填写，请等待管理员开放后再进入。</span>
+        </template>
+      </n-empty>
+    </n-card>
+
+    <n-card v-else title="职称申报自查">
       <div class="toolbar">
         <n-input v-model:value="targetTitle" placeholder="目标职称，如：副教授" style="max-width: 260px" />
         <n-button type="primary" @click="loadGap">开始自查</n-button>
@@ -30,20 +42,43 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { getHrTitleGap } from '@/api'
+import { getHrFillSettings, getHrTitleGap } from '@/api'
 
 const targetTitle = ref('副教授')
 const gap = ref<any>(null)
+const accessLoading = ref(true)
+const titleCheckOpen = ref(false)
 
 async function loadGap() {
+  if (!titleCheckOpen.value) return
   gap.value = await getHrTitleGap(targetTitle.value)
 }
 
-onMounted(loadGap)
+async function loadAccess() {
+  accessLoading.value = true
+  try {
+    const settings = await getHrFillSettings()
+    titleCheckOpen.value = Boolean(settings?.title_check_open)
+    if (titleCheckOpen.value) {
+      await loadGap()
+    }
+  } finally {
+    accessLoading.value = false
+  }
+}
+
+onMounted(loadAccess)
 </script>
 
 <style scoped>
 .hr-page { padding: 20px; }
 .toolbar { display: flex; gap: 12px; margin-bottom: 16px; }
 .result { margin-bottom: 16px; }
+.closed-card {
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.closed-tip { color: #64748b; }
 </style>

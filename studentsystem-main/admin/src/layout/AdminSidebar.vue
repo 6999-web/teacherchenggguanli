@@ -12,10 +12,6 @@
         <el-icon><DataLine /></el-icon>
         <span>数据概览</span>
       </el-menu-item>
-      <el-menu-item index="/admin/achievements">
-        <el-icon><List /></el-icon>
-        <span>成果审核</span>
-      </el-menu-item>
       <el-menu-item index="/admin/hr/teachers">
         <el-icon><User /></el-icon>
         <span>教师档案</span>
@@ -47,7 +43,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { DataLine, EditPen, List, Medal, Setting, TrendCharts, User } from '@element-plus/icons-vue'
+import { DataLine, EditPen, Medal, Setting, TrendCharts, User } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const activeMenu = computed(() => route.path)

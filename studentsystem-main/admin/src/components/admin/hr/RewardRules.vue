@@ -70,7 +70,9 @@
             <el-table-column label="类别" min-width="150">
               <template #default="{ row }">{{ labelCategory(row.category) }}</template>
             </el-table-column>
-            <el-table-column prop="subcategory" label="细分内容" min-width="180" />
+            <el-table-column label="细分内容" min-width="220">
+              <template #default="{ row }">{{ labelSubcategory(row.subcategory) }}</template>
+            </el-table-column>
             <el-table-column label="级别" width="110">
               <template #default="{ row }">{{ labelLevel(row.level) }}</template>
             </el-table-column>
@@ -79,6 +81,9 @@
             </el-table-column>
             <el-table-column label="金额" width="120">
               <template #default="{ row }">{{ formatMoney(row.amount) }}</template>
+            </el-table-column>
+            <el-table-column label="规则说明" min-width="180">
+              <template #default="{ row }">{{ ruleNote(row) }}</template>
             </el-table-column>
           </el-table>
         </el-tab-pane>
@@ -116,8 +121,12 @@
 
           <el-table :data="competitions" border stripe>
             <el-table-column prop="name" label="赛事名称" />
-            <el-table-column prop="competition_type" label="类型" width="120" />
-            <el-table-column prop="max_level" label="最高级别" width="120" />
+            <el-table-column label="类型" width="120">
+              <template #default="{ row }">{{ labelCompetitionType(row.competition_type) }}</template>
+            </el-table-column>
+            <el-table-column label="最高级别" width="120">
+              <template #default="{ row }">{{ labelLevel(row.max_level) }}</template>
+            </el-table-column>
             <el-table-column prop="organizer" label="主办单位" />
             <el-table-column prop="policy_version" label="政策版本" width="110" />
           </el-table>
@@ -165,6 +174,16 @@ const competitionForm = reactive<any>({
   policy_version: '2024',
 })
 
+const subcategoryMap: Record<string, string> = {
+  group: '团体奖励',
+  individual: '单项奖励',
+}
+
+const competitionTypeMap: Record<string, string> = {
+  teacher: '教师比赛类',
+  student: '指导学生比赛类',
+}
+
 const policyRuleOptions = rewardRules2024.map((rule, index) => ({
   label: `${ruleTitle(rule)} - ${money(rule.amount)}`,
   value: String(index),
@@ -182,8 +201,24 @@ function labelRank(value?: string) {
   return optionLabel(rankMap, value)
 }
 
+function labelSubcategory(value?: string) {
+  return value ? subcategoryMap[value] || value : '-'
+}
+
+function labelCompetitionType(value?: string) {
+  return value ? competitionTypeMap[value] || value : '-'
+}
+
 function formatMoney(value: number) {
   return money(Number(value || 0))
+}
+
+function ruleNote(row: any) {
+  const notes = []
+  if (row.staged) notes.push('立项和结题各发放50%')
+  if (row.annual_cap) notes.push(`年度封顶${money(row.annual_cap)}`)
+  if (row.manual_required) notes.push('需人工复核')
+  return notes.join('；') || '-'
 }
 
 function applyRule(rule: RewardRuleOption) {
@@ -194,10 +229,10 @@ function applyRule(rule: RewardRuleOption) {
     level: rule.level,
     rank: rule.rank,
     amount: rule.amount,
-    manual_required: false,
-    staged: false,
-    annual_cap: 0,
-    allow_duplicate: false,
+    manual_required: !!rule.manual_required,
+    staged: !!rule.staged,
+    annual_cap: rule.annual_cap || 0,
+    allow_duplicate: !!rule.allow_duplicate,
   })
 }
 

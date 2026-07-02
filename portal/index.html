@@ -1,104 +1,28 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="refresh" content="0; url=hr.html" />
     <title>教师成果管理平台</title>
     <style>
-      * { box-sizing: border-box; }
       body {
         margin: 0;
         min-height: 100vh;
-        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
-        color: #1f2937;
-        background: #333f89;
-      }
-      .portal { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 20px; }
-      .portal-inner { width: min(960px, 100%); }
-      .brand { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 28px; color: #fff; }
-      .brand-logo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: #fff; padding: 4px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28); }
-      .brand h1 { margin: 0; font-size: 36px; font-weight: 700; letter-spacing: 0; }
-      .brand p { margin: 6px 0 0; color: rgba(255, 255, 255, 0.82); font-size: 15px; }
-      .system-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; }
-      .system-card {
-        min-height: 238px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.96);
-        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
-        text-decoration: none;
-        color: inherit;
-        padding: 30px 28px;
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        align-items: center;
+        justify-content: center;
+        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        background: #333f89;
+        color: #fff;
       }
-      .system-card:hover { transform: translateY(-4px); border-color: #1e3a5f; box-shadow: 0 24px 54px rgba(0, 0, 0, 0.28); }
-      .system-icon { width: 66px; height: 66px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: linear-gradient(135deg, #1e3a5f, #132c4a); color: #fff; margin-bottom: 22px; }
-      .reward-card .system-icon { background: linear-gradient(135deg, #0f766e, #134e4a); }
-      .system-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; color: #1e3a5f; }
-      .system-desc { color: #606266; font-size: 15px; line-height: 1.7; }
-      .system-actions { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; }
-      .system-action {
-        border: 1px solid #1e3a5f;
-        border-radius: 6px;
-        color: #1e3a5f;
-        font-weight: 600;
-        font-size: 15px;
-        padding: 8px 12px;
-      }
-      .system-action.primary { background: #1e3a5f; color: #fff; }
-      .reward-card .system-action { border-color: #0f766e; color: #0f766e; }
-      .reward-card .system-action.primary { background: #0f766e; color: #fff; }
-      .hr-card .system-action { border-color: #7c3aed; color: #7c3aed; }
-      .hr-card .system-action.primary { background: #7c3aed; color: #fff; }
-      @media (max-width: 720px) { .brand { justify-content: flex-start; } .brand h1 { font-size: 28px; } .system-grid { grid-template-columns: 1fr; } }
+      a { color: #fff; font-weight: 600; }
     </style>
   </head>
   <body>
-    <main class="portal">
-      <div class="portal-inner">
-        <header class="brand">
-          <img class="brand-logo" src="school-logo.jpg" alt="校徽" />
-          <div>
-            <h1>教师成果管理平台</h1>
-            <p>请选择需要进入的业务体系</p>
-          </div>
-        </header>
-
-        <section class="system-grid" aria-label="系统入口">
-          <a class="system-card" href="#" data-port="5008" data-path="/login">
-            <span class="system-icon" aria-hidden="true">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.8" />
-                <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-              </svg>
-            </span>
-            <span class="system-title">评价管理体系</span>
-            <span class="system-desc">进入教研室评价管理端，完成自评填报、评分审核、结果查看等工作。</span>
-          </a>
-
-          <a class="system-card hr-card" href="hr.html">
-            <span class="system-icon" aria-hidden="true">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                <path d="M16 11.5a4 4 0 1 0-8 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                <path d="M6 20a6 6 0 0 1 12 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                <path d="M18.5 8.5a2.5 2.5 0 0 1 0 5M21 20a4.5 4.5 0 0 0-2.3-3.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-              </svg>
-            </span>
-            <span class="system-title">教师人事管理体系</span>
-            <span class="system-desc">进入教师一张表、档案附件、绩效记录、职称自查和材料缺口提醒。</span>
-          </a>
-        </section>
-      </div>
-    </main>
+    <p>正在进入教师成果管理平台，如未自动跳转，请 <a href="hr.html">点击进入</a>。</p>
     <script>
-      document.querySelectorAll('[data-port]').forEach((link) => {
-        const port = link.dataset.port;
-        const path = link.dataset.path || '/';
-        link.href = `${window.location.protocol}//${window.location.hostname}:${port}${path}`;
-      });
+      window.location.replace('hr.html');
     </script>
   </body>
 </html>

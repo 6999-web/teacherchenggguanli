@@ -238,6 +238,17 @@ class HrTitleApplication(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class HrFillSetting(Base):
+    """Controls whether teacher-facing HR pages are open for filling."""
+    __tablename__ = "hr_fill_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    feature_key = Column(String(50), unique=True, nullable=False, index=True)
+    is_open = Column(Boolean, default=False, nullable=False)
+    updated_by = Column(Integer, ForeignKey("sys_users.id"), nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class RewardRule(Base):
     """Configurable teaching reward rule."""
     __tablename__ = "reward_rules"

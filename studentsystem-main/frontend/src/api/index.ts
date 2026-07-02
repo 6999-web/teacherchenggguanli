@@ -14,9 +14,6 @@ import type {
     AchievementCreateRequest,
     AchievementCreateResponse,
     AchievementsResponse,
-    AchievementsReviewQuery,
-    AchievementsReviewResponse,
-    AuditAchievementRequest,
     ChatRequest,
     ChatResponse,
     StudentPersonaResponse,
@@ -121,6 +118,10 @@ export function recognizeCertificate(file: File, certType?: string): Promise<Cer
  */
 export function submitAchievement(data: AchievementCreateRequest): Promise<AchievementCreateResponse> {
     return request.post('/api/v1/student/achievements', data)
+}
+
+export function recognizeTeachingReward(data: { title: string; attachment_names: string[] }): Promise<any> {
+    return request.post('/api/v1/student/reward/recognize', data)
 }
 
 /**
@@ -243,24 +244,6 @@ export async function queryStudentInfo(data: { question: string; student_id?: st
     }
 }
 
-// ==================== 管理员API ====================
-
-/**
- * 获取成果审核列表
- * GET /api/v1/admin/achievements
- */
-export function getAchievementsForReview(params?: AchievementsReviewQuery): Promise<AchievementsReviewResponse> {
-    return request.get('/api/v1/admin/achievements', { params })
-}
-
-/**
- * 审核成果
- * PATCH /api/v1/admin/achievements/{id}/audit
- */
-export function auditAchievement(achievementId: number, data: AuditAchievementRequest): Promise<void> {
-    return request.patch(`/api/v1/admin/achievements/${achievementId}/audit`, data)
-}
-
 // ==================== 人事档案与奖励认定 ====================
 
 export function getHrDashboard(): Promise<any> {
@@ -285,6 +268,10 @@ export function uploadHrAttachment(file: File, attachmentType: string, title: st
     formData.append('attachment_type', attachmentType)
     formData.append('title', title)
     return request.post('/api/v1/hr/attachments', formData)
+}
+
+export function getHrFillSettings(): Promise<any> {
+    return request.get('/api/v1/hr/fill-settings')
 }
 
 export function getHrPerformance(): Promise<any> {
@@ -478,6 +465,7 @@ export default {
     getStudentProfile,
     recognizeCertificate,
     submitAchievement,
+    recognizeTeachingReward,
     getMyAchievements,
     getMyCertificates,
     deleteAchievement,
@@ -487,14 +475,12 @@ export default {
     createStudentPortrait,
     addQaHistory,
     queryStudentInfo,
-    // 管理员
-    getAchievementsForReview,
-    auditAchievement,
     getHrDashboard,
     getHrProfile,
     submitHrProfileChange,
     getHrAttachments,
     uploadHrAttachment,
+    getHrFillSettings,
     getHrPerformance,
     getHrTitleGap,
     getMyRewardRecognitions,

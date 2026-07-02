@@ -7,9 +7,7 @@
           <IconSchool :size="24" />
         </n-icon>
       </div>
-      <transition name="fade">
-        <h1 class="logo-title">{{ systemTitle }}</h1>
-      </transition>
+      <h1 class="logo-title">{{ systemTitle }}</h1>
     </div>
 
     <!-- 涓儴鑿滃崟鍖哄煙 -->
@@ -92,8 +90,7 @@ const user_avatar = ref('')
 const activeMenu = ref('achievement')
 const loading = ref(false)
 const systemTitle = computed(() => {
-  if (route.path.startsWith('/student/hr')) return '教师人事管理体系'
-  if (route.path.startsWith('/student/teaching-reward')) return '教师人事管理体系'
+  if (route.path.startsWith('/student/hr')) return '教师成果管理平台'
   return '教师成果管理平台'
 })
 
@@ -111,7 +108,6 @@ const avatarDisplayUrl = computed(() => {
 const menu_items = ref([
   { label: '成果收集与展示', key: 'achievement', icon: () => h(IconAward) },
   { label: '教师个人档案', key: 'hr_profile', icon: () => h(IconFileText) },
-  { label: '教学奖励申报', key: 'teaching_reward_apply', icon: () => h(IconAward) },
   { label: '人事附件', key: 'hr_attachments', icon: () => h(IconFileText) },
   { label: '历年绩效', key: 'hr_performance', icon: () => h(IconChartBar) },
   { label: '职称自查', key: 'hr_title', icon: () => h(IconAward) },
@@ -150,7 +146,6 @@ const pathToMenu: Record<string, string> = {
   '/student/achievement-detail': 'achievement',
   '/student/certificate-ocr': 'achievement',
   '/student/hr-profile': 'hr_profile',
-  '/student/teaching-reward-apply': 'teaching_reward_apply',
   '/student/hr-attachments': 'hr_attachments',
   '/student/hr-performance': 'hr_performance',
   '/student/hr-title': 'hr_title',
@@ -160,7 +155,6 @@ const pathToMenu: Record<string, string> = {
 const menuToPath: Record<string, string> = {
   achievement: '/student/achievement',
   hr_profile: '/student/hr-profile',
-  teaching_reward_apply: '/student/teaching-reward-apply',
   hr_attachments: '/student/hr-attachments',
   hr_performance: '/student/hr-performance',
   hr_title: '/student/hr-title',

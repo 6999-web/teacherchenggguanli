@@ -28,8 +28,12 @@ const competitionRule = policy.rewardRules2024.find(
 assert.ok(competitionRule, '省级教学竞赛团体一等奖规则应存在')
 assert.equal(policy.rewardContentLabel(competitionRule), '省（部）级教学竞赛团体奖励一等奖')
 
-const applyPage = readFileSync(join(process.cwd(), 'src', 'components', 'student', 'hr', 'TeachingRewardApply.vue'), 'utf8')
-assert.match(applyPage, /Object\.entries\(categoryMap\)\.map\(\(\[value, label\]\) => \(\{\s*label,\s*value,\s*\}\)\)/s, '奖励类别下拉应直接使用 PDF 类别名称作为标签')
-assert.ok(!applyPage.includes('教学专项奖 /'), '奖励类别下拉不应给 PDF 类别添加“教学专项奖 /”前缀')
+const collectPage = readFileSync(join(process.cwd(), 'src', 'components', 'student', 'honors', 'achievement-collect.vue'), 'utf8')
+assert.ok(collectPage.includes('教学成果类'), '成果收集页应提供教学成果类入口')
+assert.ok(collectPage.includes('科研成果类'), '成果收集页应提供科研成果类入口')
+assert.ok(collectPage.includes('recognizeTeachingReward'), '教学成果类应调用后端奖励规则识别接口')
+assert.ok(collectPage.includes('label="奖项内容"'), '科研成果类应包含奖项内容输入框')
+assert.ok(collectPage.includes('label="奖金数额"'), '科研成果类应包含奖金数额输入框')
+assert.ok(!collectPage.includes('teaching-reward-apply'), '成果收集页不应引用旧教学奖励申报路由')
 
 console.log('teaching reward policy helpers ok')
