@@ -4,7 +4,10 @@
       <template #header>
         <div class="card-header">
           <span>教师档案管理</span>
-          <el-button type="primary" @click="loadRows">刷新</el-button>
+          <div class="header-actions">
+            <el-button :loading="exporting" @click="exportRows">批量导出档案数据</el-button>
+            <el-button type="primary" @click="loadRows">刷新</el-button>
+          </div>
         </div>
       </template>
 
@@ -104,11 +107,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { getFileUrl, getHrTeacherDetail, getHrTeachers } from '@/api'
+import { ElMessage } from 'element-plus'
+import { exportHrTeachers, getFileUrl, getHrTeacherDetail, getHrTeachers } from '@/api'
 
 const rows = ref<any[]>([])
 const detail = ref<any>({})
 const loading = ref(false)
+const exporting = ref(false)
 const detailVisible = ref(false)
 const filters = reactive<any>({})
 const missingTitleItems = computed(() => (detail.value.title_gap?.missing_items || []).map((name: string) => ({ name })))
@@ -126,6 +131,27 @@ async function loadRows() {
 async function openDetail(row: any) {
   detail.value = await getHrTeacherDetail(row.id)
   detailVisible.value = true
+}
+
+async function exportRows() {
+  exporting.value = true
+  try {
+    const blob = await exportHrTeachers()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `教师档案数据_${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    ElMessage.success('档案数据已开始下载')
+  } catch (error) {
+    console.error('导出教师档案失败:', error)
+    ElMessage.error('导出教师档案失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 function openFile(row: any) {
@@ -156,6 +182,12 @@ onMounted(loadRows)
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 h3 {

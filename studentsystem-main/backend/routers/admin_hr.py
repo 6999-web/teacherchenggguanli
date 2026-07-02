@@ -1,7 +1,9 @@
+import csv
 from datetime import datetime
+from io import StringIO
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Path, Query, Response
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -70,6 +72,69 @@ async def list_teachers(
     total = query.count()
     rows = query.order_by(HrTeacherProfile.id.asc()).offset((page - 1) * page_size).limit(page_size).all()
     return success_response(data={"list": [profile_to_dict(row) for row in rows], "total": total})
+
+
+@router.get("/teachers/export")
+async def export_teachers(
+    admin: SysUser = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    seed_profiles(db)
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(
+        [
+            "工号",
+            "姓名",
+            "院系",
+            "身份",
+            "当前职称",
+            "岗位",
+            "学历",
+            "学位",
+            "电话",
+            "邮箱",
+            "入职时间",
+            "绩效记录数",
+            "附件数",
+            "奖励认定数",
+        ]
+    )
+    profiles = db.query(HrTeacherProfile).order_by(HrTeacherProfile.id.asc()).all()
+    for profile in profiles:
+        performance_count = (
+            db.query(HrPerformanceRecord).filter(HrPerformanceRecord.profile_id == profile.id).count()
+        )
+        attachment_count = (
+            db.query(HrTeacherAttachment).filter(HrTeacherAttachment.profile_id == profile.id).count()
+        )
+        recognition_count = (
+            db.query(RewardRecognition).filter(RewardRecognition.profile_id == profile.id).count()
+        )
+        writer.writerow(
+            [
+                profile.employee_no or "",
+                profile.name or "",
+                profile.department or "",
+                profile.employment_type or "",
+                profile.current_title or "",
+                profile.position or "",
+                profile.education or "",
+                profile.degree or "",
+                profile.phone or "",
+                profile.email or "",
+                profile.hire_date.strftime("%Y-%m-%d") if profile.hire_date else "",
+                performance_count,
+                attachment_count,
+                recognition_count,
+            ]
+        )
+    content = "\ufeff" + output.getvalue()
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="teacher_profiles.csv"'},
+    )
 
 
 @router.get("/teachers/{profile_id}")
@@ -630,6 +695,10 @@ def recognition_to_dict(row: RewardRecognition, db: Optional[Session] = None) ->
     label_parts = reward_label_parts(row.category, row.level, row.rank, subcategory)
     profile = db.query(HrTeacherProfile).filter(HrTeacherProfile.id == row.profile_id).first() if db and row.profile_id else None
     achievement = db.query(BizAchievement).filter(BizAchievement.id == row.achievement_id).first() if db and row.achievement_id else None
+    evidence_url = achievement.evidence_url if achievement else request_data.get("evidence_url")
+    attachment_urls = request_data.get("attachment_urls") or []
+    if evidence_url and evidence_url not in attachment_urls:
+        attachment_urls = [evidence_url, *attachment_urls]
     return {
         "id": row.id,
         "achievement_id": row.achievement_id,
@@ -639,7 +708,9 @@ def recognition_to_dict(row: RewardRecognition, db: Optional[Session] = None) ->
         "department": profile.department if profile else None,
         "achievement_title": achievement.title if achievement else request_data.get("achievement_title"),
         "achievement_type": achievement.type if achievement else request_data.get("achievement_domain"),
-        "evidence_url": achievement.evidence_url if achievement else request_data.get("evidence_url"),
+        "evidence_url": evidence_url,
+        "attachment_urls": attachment_urls,
+        "attachment_names": request_data.get("attachment_names") or [],
         "declared_award": request_data.get("award"),
         "declared_bonus": request_data.get("declared_bonus"),
         "category": row.category,

@@ -24,9 +24,30 @@
         <el-table-column label="奖励内容" min-width="260">
           <template #default="{ row }">{{ rewardContent(row) }}</template>
         </el-table-column>
-        <el-table-column label="附件" width="90">
+        <el-table-column label="附件" width="120">
           <template #default="{ row }">
-            <el-link v-if="row.evidence_url" type="primary" :href="row.evidence_url" target="_blank">查看</el-link>
+            <el-dropdown v-if="attachmentLinks(row).length > 1" trigger="click" @command="openAttachment">
+              <el-button type="primary" link>查看附件</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-for="item in attachmentLinks(row)"
+                    :key="item.url"
+                    :command="item.url"
+                  >
+                    {{ item.name }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            <el-button
+              v-else-if="attachmentLinks(row).length === 1"
+              type="primary"
+              link
+              @click="openAttachment(attachmentLinks(row)[0].url)"
+            >
+              查看附件
+            </el-button>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -117,7 +138,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { auditRewardRecognition, getRewardAssistantSummary, getRewardRecognitions } from '@/api'
+import { auditRewardRecognition, getFileUrl, getRewardAssistantSummary, getRewardRecognitions } from '@/api'
 import {
   categoryMap,
   levelMap,
@@ -185,6 +206,21 @@ function assistantAwardContent(row: any) {
   const level = levelMap[row.level] || row.level || ''
   const rank = rankMap[row.rank] || row.rank || ''
   return row.content || [category, level, rank].filter(Boolean).join(' / ') || '-'
+}
+
+function attachmentLinks(row: any) {
+  const urls = Array.isArray(row.attachment_urls) ? row.attachment_urls : []
+  const names = Array.isArray(row.attachment_names) ? row.attachment_names : []
+  const merged = urls.length ? urls : (row.evidence_url ? [row.evidence_url] : [])
+  return merged.filter(Boolean).map((url: string, index: number) => ({
+    url,
+    name: names[index] || `附件${index + 1}`,
+  }))
+}
+
+function openAttachment(url: string) {
+  if (!url) return
+  window.open(getFileUrl(url), '_blank')
 }
 
 function statusText(status: string) {

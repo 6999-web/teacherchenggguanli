@@ -8,7 +8,7 @@ from schemas import AchievementListResponse, AchievementResponse, AchievementAud
 from utils import success_response, error_response
 from models import (
     BizAchievement, AchievementStatus, SysStudent,
-    SysTeacher, SysUser, HrProfileChangeRequest, RewardRecognition
+    SysTeacher, SysUser, HrProfileChangeRequest, RewardRecognition, HrTeacherProfile
 )
 from dependencies import require_admin
 from services.teaching_reward_rules import calculate_teaching_reward
@@ -48,6 +48,98 @@ async def get_audit_summary(
             "modules": modules,
         }
     )
+
+
+@router.get("/dashboard/audit-details")
+async def get_audit_details(
+    status: str = Query("submitted"),
+    admin: SysUser = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Return concrete audit records for dashboard detail buttons."""
+    if status not in {"pending", "approved", "rejected", "submitted"}:
+        return error_response(msg="status 必须是 pending、approved、rejected 或 submitted", code=400)
+
+    rows = []
+    profile_query = db.query(HrProfileChangeRequest)
+    reward_query = db.query(RewardRecognition)
+    if status != "submitted":
+        profile_query = profile_query.filter(HrProfileChangeRequest.status == status)
+        reward_query = reward_query.filter(RewardRecognition.status == status)
+
+    for request in profile_query.order_by(HrProfileChangeRequest.created_at.desc()).all():
+        profile = db.query(HrTeacherProfile).filter(HrTeacherProfile.id == request.profile_id).first()
+        changed_fields = list((request.after_data or {}).keys())
+        rows.append(
+            {
+                "module_key": "profile_changes",
+                "module_title": "教师档案变更审核",
+                "id": request.id,
+                "status": request.status,
+                "teacher_name": profile.name if profile else "",
+                "employee_no": profile.employee_no if profile else "",
+                "department": profile.department if profile else "",
+                "title": "教师档案变更",
+                "summary": "、".join(changed_fields) if changed_fields else "档案信息变更",
+                "amount": None,
+                "content": None,
+                "audit_comment": request.audit_comment,
+                "created_at": request.created_at.isoformat() if request.created_at else None,
+                "audited_at": request.audited_at.isoformat() if request.audited_at else None,
+                "route": "/admin/hr/change-requests",
+                "detail": {
+                    "profile_id": request.profile_id,
+                    "before_data": request.before_data or {},
+                    "after_data": request.after_data or {},
+                },
+            }
+        )
+
+    for recognition in reward_query.order_by(RewardRecognition.created_at.desc()).all():
+        profile = db.query(HrTeacherProfile).filter(HrTeacherProfile.id == recognition.profile_id).first()
+        achievement = (
+            db.query(BizAchievement).filter(BizAchievement.id == recognition.achievement_id).first()
+            if recognition.achievement_id
+            else None
+        )
+        detail = recognition.calculation_detail or {}
+        request_data = detail.get("request_data") or {}
+        title = achievement.title if achievement else request_data.get("achievement_title") or request_data.get("award") or "教学奖励认定"
+        rows.append(
+            {
+                "module_key": "reward_recognitions",
+                "module_title": "教学奖励认定审核",
+                "id": recognition.id,
+                "status": recognition.status,
+                "teacher_name": profile.name if profile else "",
+                "employee_no": profile.employee_no if profile else "",
+                "department": profile.department if profile else "",
+                "title": title,
+                "summary": request_data.get("award") or recognition.category,
+                "amount": recognition.final_amount or 0,
+                "content": {
+                    "category": recognition.category,
+                    "level": recognition.level,
+                    "rank": recognition.rank,
+                    "base_amount": recognition.base_amount or 0,
+                    "final_amount": recognition.final_amount or 0,
+                    "policy_basis": recognition.policy_basis,
+                },
+                "audit_comment": recognition.audit_comment,
+                "created_at": recognition.created_at.isoformat() if recognition.created_at else None,
+                "audited_at": recognition.audited_at.isoformat() if recognition.audited_at else None,
+                "route": "/admin/reward/recognitions",
+                "detail": {
+                    "achievement_id": recognition.achievement_id,
+                    "profile_id": recognition.profile_id,
+                    "request_data": request_data,
+                    "calculation_detail": detail,
+                },
+            }
+        )
+
+    rows.sort(key=lambda item: item.get("created_at") or "", reverse=True)
+    return success_response(data={"status": status, "total": len(rows), "list": rows})
 
 
 def _string_status_counts(db: Session, model, key: str, title: str, route: str):

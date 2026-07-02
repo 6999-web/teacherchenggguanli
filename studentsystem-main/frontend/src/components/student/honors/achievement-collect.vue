@@ -52,6 +52,17 @@
               </n-form-item>
             </n-grid-item>
             <n-grid-item>
+              <n-form-item label="成果细分类型" path="teachingCategory">
+                <n-select
+                  v-model:value="form.teachingCategory"
+                  :options="teachingCategoryOptions"
+                  placeholder="请选择教学成果细分类型"
+                  clearable
+                  @update:value="handleTeachingCategoryChange"
+                />
+              </n-form-item>
+            </n-grid-item>
+            <n-grid-item>
               <n-form-item label="奖金" path="declaredBonus">
                 <n-input-number
                   v-model:value="form.declaredBonus"
@@ -116,6 +127,16 @@
               </n-form-item>
             </n-grid-item>
             <n-grid-item>
+              <n-form-item label="科研成果类型" path="researchType">
+                <n-select
+                  v-model:value="form.researchType"
+                  :options="researchTypeOptions"
+                  placeholder="请选择科研成果类型"
+                  clearable
+                />
+              </n-form-item>
+            </n-grid-item>
+            <n-grid-item>
               <n-form-item label="奖项内容" path="award">
                 <n-input v-model:value="form.award" placeholder="请输入奖项内容" clearable />
               </n-form-item>
@@ -157,6 +178,7 @@ import {
   rewardContentLabel,
   rewardRuleKey,
   rewardRules2024,
+  categoryMap,
   type RewardRuleOption,
 } from '@/utils/teaching-reward-policy'
 
@@ -177,6 +199,8 @@ const form = reactive({
   achievementDomain: 'teaching' as AchievementDomain,
   title: '',
   award: '',
+  teachingCategory: null as string | null,
+  researchType: null as string | null,
   declaredBonus: null as number | null,
   ruleKey: null as string | null,
 })
@@ -201,6 +225,24 @@ const rules: FormRules = {
     },
     trigger: ['input', 'blur'],
   },
+  teachingCategory: {
+    validator() {
+      if (form.achievementDomain === 'teaching' && !form.teachingCategory) {
+        return new Error('请选择教学成果细分类型')
+      }
+      return true
+    },
+    trigger: ['change'],
+  },
+  researchType: {
+    validator() {
+      if (form.achievementDomain === 'research' && !form.researchType) {
+        return new Error('请选择科研成果类型')
+      }
+      return true
+    },
+    trigger: ['change'],
+  },
   declaredBonus: {
     required: true,
     type: 'number',
@@ -218,8 +260,23 @@ const rules: FormRules = {
   },
 }
 
+const teachingCategoryOptions = computed(() => {
+  const categories = [...new Set(rewardRules2024.map(rule => rule.category))]
+  return categories.map(value => ({ label: categoryMap[value] || value, value }))
+})
+
+const researchTypeOptions = [
+  { label: '科研论文', value: 'paper' },
+  { label: '科研项目', value: 'project' },
+  { label: '专利成果', value: 'patent' },
+  { label: '著作出版', value: 'book' },
+  { label: '科研获奖', value: 'award' },
+  { label: '咨政成果', value: 'consulting_report' },
+  { label: '其他科研成果', value: 'other' },
+]
+
 const ruleOptions = computed(() =>
-  rewardRules2024.map(rule => ({
+  rewardRules2024.filter(rule => !form.teachingCategory || rule.category === form.teachingCategory).map(rule => ({
     label: `${rewardContentLabel(rule)} - ${money(rule.amount)}`,
     value: rewardRuleKey(rule),
   })),
@@ -257,15 +314,25 @@ function resetFormFields() {
   lastAiMatched.value = false
   form.title = ''
   form.award = ''
+  form.teachingCategory = null
+  form.researchType = null
   form.declaredBonus = null
   form.ruleKey = null
   fileList.value = []
   formRef.value?.restoreValidation()
 }
 
+function handleTeachingCategoryChange() {
+  if (selectedRule.value && selectedRule.value.category !== form.teachingCategory) {
+    form.ruleKey = null
+    form.declaredBonus = null
+  }
+}
+
 function handleRuleChange() {
   manualOverride.value = true
   if (selectedRule.value) {
+    form.teachingCategory = selectedRule.value.category
     form.declaredBonus = selectedRule.value.amount
   }
 }
@@ -293,6 +360,7 @@ async function autoRecognize(silent = false) {
     if (data?.matched && data.rule_key) {
       const matchedRule = rewardRules2024.find(rule => rewardRuleKey(rule) === data.rule_key)
       if (matchedRule) {
+        form.teachingCategory = matchedRule.category
         form.ruleKey = rewardRuleKey(matchedRule)
         form.declaredBonus = Number(data.amount || matchedRule.amount || 0)
         manualOverride.value = false
@@ -365,6 +433,10 @@ async function submit() {
     const awardText = isTeaching && selectedRule.value ? rewardContentLabel(selectedRule.value) : form.award.trim()
     const contentJson: Record<string, any> = {
       achievement_domain: form.achievementDomain,
+      achievement_type: isTeaching ? form.teachingCategory : form.researchType,
+      achievement_type_text: isTeaching
+        ? (form.teachingCategory ? categoryMap[form.teachingCategory] || form.teachingCategory : '')
+        : (researchTypeOptions.find(item => item.value === form.researchType)?.label || ''),
       award: awardText,
       declared_bonus: Number(form.declaredBonus || 0),
       attachment_urls: attachmentUrls,

@@ -14,24 +14,29 @@
     <div class="menu-container">
       <n-scrollbar style="max-height: 100%;">
         <div class="menu-wrapper">
-          <div class="menu-items">
-            <div
-              v-for="item in menu_items"
-              :key="item.key"
-              class="menu-item"
-              :class="{ 'is-active': activeMenu === item.key }"
-              @click="handleMenuClick(item.key)"
-            >
-              <div class="menu-item-content">
-                <div class="menu-item-icon">
-                  <n-icon size="18">
-                    <component :is="item.icon" />
-                  </n-icon>
+          <div class="menu-sections">
+            <section v-for="group in menuGroups" :key="group.title" class="menu-section">
+              <div class="menu-section-title">{{ group.title }}</div>
+              <div class="menu-items">
+                <div
+                  v-for="item in group.items"
+                  :key="item.key"
+                  class="menu-item"
+                  :class="{ 'is-active': activeMenu === item.key }"
+                  @click="handleMenuClick(item.key)"
+                >
+                  <div class="menu-item-content">
+                    <div class="menu-item-icon">
+                      <n-icon size="18">
+                        <component :is="item.icon" />
+                      </n-icon>
+                    </div>
+                    <span class="menu-item-text">{{ item.label }}</span>
+                    <div class="menu-item-indicator" v-if="activeMenu === item.key"></div>
+                  </div>
                 </div>
-                <span class="menu-item-text">{{ item.label }}</span>
-                <div class="menu-item-indicator" v-if="activeMenu === item.key"></div>
               </div>
-            </div>
+            </section>
           </div>
         </div>
       </n-scrollbar>
@@ -105,13 +110,23 @@ const avatarDisplayUrl = computed(() => {
   return user_avatar.value
 })
 
-const menu_items = ref([
-  { label: '成果收集与展示', key: 'achievement', icon: () => h(IconAward) },
-  { label: '教师个人档案', key: 'hr_profile', icon: () => h(IconFileText) },
-  { label: '人事附件', key: 'hr_attachments', icon: () => h(IconFileText) },
-  { label: '历年绩效', key: 'hr_performance', icon: () => h(IconChartBar) },
-  { label: '职称自查', key: 'hr_title', icon: () => h(IconAward) },
-  { label: 'AI智能分析', key: 'portrait_analysis', icon: () => h(IconChartBar) },
+const menuGroups = ref([
+  {
+    title: '人事体系',
+    items: [
+      { label: '教师档案', key: 'hr_profile', icon: () => h(IconFileText) },
+      { label: '人事附件', key: 'hr_attachments', icon: () => h(IconFileText) },
+      { label: '历年绩效', key: 'hr_performance', icon: () => h(IconChartBar) },
+      { label: '职称自查', key: 'hr_title', icon: () => h(IconAward) },
+    ],
+  },
+  {
+    title: '奖励体系',
+    items: [
+      { label: '成果收集与展示', key: 'achievement', icon: () => h(IconAward) },
+      { label: 'AI智能分析', key: 'portrait_analysis', icon: () => h(IconChartBar) },
+    ],
+  },
 ])
 
 const user_options = ref([
@@ -267,6 +282,19 @@ onUnmounted(() => {
 }
 
 /* ========== 菜单项 ========== */
+.menu-sections {
+  display: grid;
+  gap: 12px;
+}
+
+.menu-section-title {
+  padding: 8px 16px 6px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
 .menu-items {
   padding: 0 8px;
 }

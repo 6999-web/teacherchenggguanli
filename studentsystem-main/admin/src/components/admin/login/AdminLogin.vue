@@ -103,6 +103,17 @@
               登 录
             </el-button>
           </el-form-item>
+          <el-form-item>
+            <el-button
+              plain
+              size="large"
+              class="demo-login-button"
+              :disabled="loading"
+              @click="handleDemoLogin"
+            >
+              管理员演示账号一键登录
+            </el-button>
+          </el-form-item>
         </el-form>
 
         <div class="form-footer">
@@ -185,6 +196,12 @@ const handleLogin = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handleDemoLogin = () => {
+  loginForm.username = 'sysadmin'
+  loginForm.password = 'admin123'
+  handleLogin()
 }
 
 /**
@@ -561,6 +578,14 @@ const goToHome = () => {
 
 .login-button:active {
   transform: translateY(0);
+}
+
+.demo-login-button {
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  color: #1e3a8a;
+  border-color: #bfdbfe;
 }
 
 /* 表单底部 */

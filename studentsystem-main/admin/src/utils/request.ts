@@ -43,6 +43,9 @@ request.interceptors.request.use(
 
 request.interceptors.response.use(
     (response: AxiosResponse<FastAPIResponse>) => {
+        if (response.config.responseType === 'blob') {
+            return response.data
+        }
         const { code, msg, data } = response.data
         console.log(`[API] 响应成功:`, { code, msg, dataType: typeof data })
         if (code === 200) {

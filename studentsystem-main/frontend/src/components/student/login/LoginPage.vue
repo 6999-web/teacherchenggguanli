@@ -53,6 +53,11 @@
               登录
             </n-button>
           </n-form-item>
+          <n-form-item>
+            <n-button block secondary :disabled="loading" @click="handleDemoLogin">
+              教师演示账号一键登录
+            </n-button>
+          </n-form-item>
         </n-form>
 
       </div>
@@ -108,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, onMounted, watch } from 'vue'
+import { computed, nextTick, ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   IconUser,
@@ -209,6 +214,14 @@ const handleLogin = () => {
       loading.value = false
     }
   })
+}
+
+async function handleDemoLogin() {
+  form.student_number = '2021001'
+  form.password = 'password123'
+  rememberPassword.value = false
+  await nextTick()
+  handleLogin()
 }
 
 const handleChangePwd = () => {

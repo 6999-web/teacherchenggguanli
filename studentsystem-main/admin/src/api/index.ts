@@ -19,12 +19,20 @@ export function getAdminAuditSummary(): Promise<any> {
     return request.get('/api/v1/admin/dashboard/audit-summary')
 }
 
+export function getAdminAuditDetails(status: 'pending' | 'approved' | 'rejected' | 'submitted'): Promise<any> {
+    return request.get('/api/v1/admin/dashboard/audit-details', { params: { status } })
+}
+
 export function getHrTeachers(params?: any): Promise<any> {
     return request.get('/api/v1/admin/hr/teachers', { params })
 }
 
 export function getHrTeacherDetail(profileId: number): Promise<any> {
     return request.get(`/api/v1/admin/hr/teachers/${profileId}`)
+}
+
+export function exportHrTeachers(): Promise<Blob> {
+    return request.get('/api/v1/admin/hr/teachers/export', { responseType: 'blob' } as any)
 }
 
 export function getHrChangeRequests(params?: any): Promise<any> {
@@ -160,8 +168,10 @@ export function formatDate(dateStr: string, format: string = 'YYYY-MM-DD HH:mm')
 export default {
     login,
     getAdminAuditSummary,
+    getAdminAuditDetails,
     getHrTeachers,
     getHrTeacherDetail,
+    exportHrTeachers,
     getHrChangeRequests,
     auditHrChangeRequest,
     createHrPerformance,
