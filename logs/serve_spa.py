@@ -7,19 +7,26 @@ import os, sys
 ROOT = Path(sys.argv[1]).resolve()
 PORT = int(sys.argv[2])
 BACKEND = sys.argv[3] if len(sys.argv) > 3 else ''
+ADMIN_ROOT = Path(sys.argv[4]).resolve() if len(sys.argv) > 4 and sys.argv[4] else None
 os.chdir(ROOT)
 
 class Handler(SimpleHTTPRequestHandler):
+    def _choose_root(self, path):
+        if ADMIN_ROOT and (path == '/admin' or path.startswith('/admin/')):
+            return ADMIN_ROOT, path[len('/admin'):].lstrip('/')
+        return ROOT, path.lstrip('/')
+
     def translate_path(self, path):
-        rel = path.split('?', 1)[0].split('#', 1)[0].lstrip('/')
-        target = (ROOT / rel).resolve()
+        clean = path.split('?', 1)[0].split('#', 1)[0]
+        root, rel = self._choose_root(clean)
+        target = (root / rel).resolve()
         try:
-            target.relative_to(ROOT)
+            target.relative_to(root)
         except ValueError:
-            return str(ROOT / 'index.html')
+            return str(root / 'index.html')
         if target.exists() and target.is_file():
             return str(target)
-        return str(ROOT / 'index.html')
+        return str(root / 'index.html')
 
     def do_GET(self):
         if BACKEND and (self.path.startswith('/api') or self.path.startswith('/uploads')):
@@ -56,4 +63,4 @@ class Handler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
 
-ThreadingHTTPServer(('127.0.0.1', PORT), Handler).serve_forever()
+ThreadingHTTPServer(('0.0.0.0', PORT), Handler).serve_forever()
